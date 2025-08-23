@@ -24,46 +24,46 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 const parseYear = (dateStr: string): number | null => {
     if (!dateStr) return null;
     const trimmedDate = dateStr.trim();
-  
+
     // Handles "Month YYYY" format (e.g., "December 1948")
     const monthYearMatch = trimmedDate.match(
       new RegExp(`^(${MONTHS.join('|')})\\s+(\\d{4})$`, 'i')
     );
     if (monthYearMatch) {
-      const monthName = monthYearMatch[1];
-      const year = parseInt(monthYearMatch[2], 10);
-      const monthIndex = MONTHS.findIndex(m => m.toLowerCase() === monthName.toLowerCase());
-      if (monthIndex !== -1) {
-        // Mid-month approximation
-        return year + (monthIndex / 12);
-      }
+        const monthName = monthYearMatch[1];
+        const year = parseInt(monthYearMatch[2], 10);
+        const monthIndex = MONTHS.findIndex(m => m.toLowerCase() === monthName.toLowerCase());
+        if (monthIndex !== -1) {
+            // Mid-month approximation
+            return year + ((monthIndex + 0.5) / 12);
+        }
     }
-  
-    // Try parsing with Date.UTC for full dates or YYYY
-    // Using UTC is crucial to avoid timezone issues.
-    const date = new Date(trimmedDate);
-     // Check if the date is just a year
+
+    // Handles "YYYY" format
     if (/^\d{4}$/.test(trimmedDate)) {
         return parseInt(trimmedDate, 10);
     }
-
-    if (!isNaN(date.getTime())) {
-      const year = date.getUTCFullYear();
-      const startOfYear = Date.UTC(year, 0, 1);
-      const endOfYear = Date.UTC(year + 1, 0, 1);
-      const totalTimeInYear = endOfYear - startOfYear;
-      const timeFromStart = date.getTime() - startOfYear;
-      
-      if (totalTimeInYear > 0) {
-        return year + (timeFromStart / totalTimeInYear);
-      }
-      return year;
-    }
     
+    // Fallback for full dates using UTC
+    const date = new Date(trimmedDate);
+    if (!isNaN(date.getTime())) {
+        const year = date.getUTCFullYear();
+        const startOfYear = Date.UTC(year, 0, 1);
+        const endOfYear = Date.UTC(year + 1, 0, 1);
+        const totalTimeInYear = endOfYear - startOfYear;
+        const timeFromStart = date.getTime() - startOfYear;
+
+        if (totalTimeInYear > 0) {
+            return year + (timeFromStart / totalTimeInYear);
+        }
+        return year;
+    }
+
     // Final fallback for formats like "c. 1950" or other unparseable strings.
     const fallbackYearMatch = trimmedDate.match(/\b(\d{4})\b/);
     return fallbackYearMatch ? parseInt(fallbackYearMatch[0], 10) : null;
 };
+
 
 
 export default function TimelineView({ timelines, zoom, onRemoveTimeline }: TimelineViewProps) {
@@ -114,7 +114,7 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
 
     for (let year = start; year <= maxYear; year += interval) {
       if(year >= minYear){
-        markers.push(Math.round(year));
+        markers.push(year);
       }
     }
     return markers;
