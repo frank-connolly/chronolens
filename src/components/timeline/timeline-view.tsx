@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef } from 'react';
 import type { Timeline } from '@/types';
 import TimelineColumn from './timeline-column';
 import YearScale from './year-scale';
@@ -21,6 +21,8 @@ const MIN_PX_BETWEEN_MARKERS = 60;
 const parseYear = (dateStr: string): number | null => {
     if (!dateStr) return null;
     const trimmedDate = dateStr.trim();
+
+    // UTC-based parsing to avoid timezone-related off-by-one errors.
     
     // Attempt to match "Month YYYY" (e.g., "December 1948")
     const monthYearMatch = trimmedDate.match(/^(january|february|march|april|may|june|july|august|september|october|november|december)\s+(\d{4})$/i);
@@ -58,6 +60,7 @@ const parseYear = (dateStr: string): number | null => {
     const fallbackYearMatch = trimmedDate.match(/\b(\d{4})\b/);
     return fallbackYearMatch ? parseInt(fallbackYearMatch[0], 10) : null;
 };
+
 
 export default function TimelineView({ timelines, zoom, onRemoveTimeline }: TimelineViewProps) {
   const [minYear, maxYear] = useMemo(() => {
@@ -136,7 +139,7 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
 
   const totalHeight = (maxYear - minYear) * Y_AXIS_MULTIPLIER * zoom;
   
-  const mainRef = React.useRef<HTMLDivElement>(null);
+  const mainRef = useRef<HTMLDivElement>(null);
   
   const cursorYear = useMemo(() => {
     if (cursorY === null || !mainRef.current) return null;
