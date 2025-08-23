@@ -25,6 +25,12 @@ const parseYear = (dateStr: string): number | null => {
   const date = new Date(dateStr);
   if (!isNaN(date.getTime())) {
     const year = date.getFullYear();
+
+    // If the date string is just a year, treat it as the start of that year.
+    if (/^\d{4}$/.test(dateStr.trim())) {
+      return year;
+    }
+
     const startOfYear = new Date(year, 0, 1);
     const timeDiff = date.getTime() - startOfYear.getTime();
     // Check if it's a leap year
@@ -35,7 +41,7 @@ const parseYear = (dateStr: string): number | null => {
   }
   
   // Fallback for just a year
-  const yearMatch = dateStr.match(/\b\d{4}\b/);
+  const yearMatch = dateStr.match(/\b(\d{4})\b/);
   return yearMatch ? parseInt(yearMatch[0], 10) : null;
 };
 
