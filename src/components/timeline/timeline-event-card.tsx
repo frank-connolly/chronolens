@@ -20,7 +20,7 @@ export default function TimelineEventCard({ event, top, side }: TimelineEventCar
       className={cn(
         'absolute w-[calc(50%-1rem)] transition-all duration-300',
         side === 'left' ? 'left-0' : 'right-0',
-        isExpanded && 'z-10' // Apply z-index when expanded
+        isExpanded ? 'z-10' : 'z-0'
       )}
       style={{ top: `${top}px` }}
     >

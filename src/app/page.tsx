@@ -26,7 +26,6 @@ export default function ChronoLensPage() {
       const savedTimelines = localStorage.getItem(TIMELINES_STORAGE_KEY);
       if (savedTimelines) {
         setTimelines(JSON.parse(savedTimelines));
-        setIsInitialLoading(false);
       } else {
         // If no saved data, fetch the default timeline
         startTransition(async () => {
@@ -40,19 +39,17 @@ export default function ChronoLensPage() {
               variant: "destructive",
             })
           }
-          setIsInitialLoading(false);
         });
       }
     } catch (error) {
       console.error("Failed to parse timelines from localStorage", error);
-      setIsInitialLoading(false); // Stop loading even if there's an error
+    } finally {
+      setIsInitialLoading(false);
     }
   }, [toast]);
 
   // Save timelines to localStorage whenever they change
   useEffect(() => {
-    // We don't save during initial loading to prevent overwriting stored data
-    // with a potentially empty or default state before hydration is complete.
     if (!isInitialLoading) {
       localStorage.setItem(TIMELINES_STORAGE_KEY, JSON.stringify(timelines));
     }

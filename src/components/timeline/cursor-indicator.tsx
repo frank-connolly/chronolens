@@ -8,7 +8,8 @@ interface CursorIndicatorProps {
 }
 
 export default function CursorIndicator({ top, year }: CursorIndicatorProps) {
-  const label = getMarkerLabel(year, 'day'); // Use day for most granular label
+  // Always show the most granular label for the cursor
+  const label = getMarkerLabel(year, 'day');
 
   return (
     <div
