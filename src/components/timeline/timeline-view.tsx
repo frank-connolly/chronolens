@@ -22,26 +22,38 @@ const Y_AXIS_MULTIPLIER = 20; // pixels per year at zoom level 1
 const parseYear = (dateStr: string): number | null => {
   if (!dateStr) return null;
 
-  // Attempt to parse with Date constructor
   const date = new Date(dateStr);
+  
+  // Check for invalid date strings that the Date constructor might interpret loosely
+  const justYearMatch = dateStr.match(/^\s*(-?\d{1,4})\s*$/);
+  if (justYearMatch) {
+      return parseInt(justYearMatch[1], 10);
+  }
+
   if (!isNaN(date.getTime())) {
     const year = date.getFullYear();
-    // Check if it's a real date or just a year
-    // `new Date('2001')` gives Dec 31, 2000 in some timezones.
-    // `new Date('2001-01-01T00:00:00')` is more reliable.
-    // Let's check if the original string just contained a year.
-    const yearMatch = dateStr.match(/^\s*(\d{4})\s*$/);
-    if(yearMatch) {
-        return parseInt(yearMatch[1], 10);
-    }
+    const startOfYear = new Date(year, 0, 1);
+    const endOfYear = new Date(year + 1, 0, 1);
+    const totalDaysInYear = (endOfYear.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24);
     
-    // It's a more complete date, so we can get month for fractional year
-    const month = date.getMonth(); // 0-11
+    // Check if the original string was just a year, which can be parsed ambiguously.
+    // e.g. new Date('1990') can result in a date in 1989 in some timezones.
+    // If it looks like just a year, trust the regex match above if it existed.
+    // Otherwise, for full dates, the Date object is more reliable.
+    const dateStringHasDayAndMonth = /\w+\s+\d+,?\s+\d{4}/.test(dateStr) || /\d{4}-\d{2}-\d{2}/.test(dateStr);
+
+    if (dateStringHasDayAndMonth) {
+       const dayOfYear = (date.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24);
+       return year + dayOfYear / totalDaysInYear;
+    }
+
+    // Handle month and year dates
+    const month = date.getMonth();
     return year + month / 12;
   }
   
   // Fallback for just year "YYYY" format that Date might misinterpret
-  const match = dateStr.match(/\b\d{3,4}\b/);
+  const match = dateStr.match(/\b-?\d{3,4}\b/);
   const year = match ? parseInt(match[0], 10) : null;
   return year && !isNaN(year) ? year : null;
 }
@@ -64,7 +76,7 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
       if (max - min < 1) {
         max = min + 1;
       }
-      const padding = Math.ceil((max - min) * 0.05);
+      const padding = Math.max((max - min) * 0.05, 0.1);
       return [min - padding, max + padding];
     }
     return [1900, 2025];
