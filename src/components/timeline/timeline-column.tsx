@@ -11,6 +11,9 @@ interface TimelineColumnProps {
   parseYear: (dateStr: string) => number | null;
 }
 
+const CARD_SPACING = 16; // 1rem
+const ESTIMATED_CARD_HEIGHT = 80; // Estimated height for an unexpanded card
+
 export default function TimelineColumn({
   timeline,
   minYear,
@@ -18,6 +21,15 @@ export default function TimelineColumn({
   yAxisMultiplier,
   parseYear
 }: TimelineColumnProps) {
+
+  // We need to keep track of the bottom position of the last card on each side
+  const lastPosition: { left: number, right: number } = { left: -Infinity, right: -Infinity };
+
+  const sortedEvents = [...timeline.events].sort((a, b) => {
+    const yearA = parseYear(a.date) ?? Infinity;
+    const yearB = parseYear(b.date) ?? Infinity;
+    return yearA - yearB;
+  });
 
   return (
     <div className="relative w-80 shrink-0 h-full">
@@ -31,18 +43,26 @@ export default function TimelineColumn({
       <div className="absolute top-0 left-1/2 -translate-x-1/2 h-full w-0.5 bg-border -z-10" />
       
       <div className="relative h-full">
-        {timeline.events.map((event, index) => {
+        {sortedEvents.map((event, index) => {
           const year = parseYear(event.date);
           if (year === null) return null;
 
-          const top = (year - minYear) * yAxisMultiplier * zoom;
+          const idealTop = (year - minYear) * yAxisMultiplier * zoom;
           const side = index % 2 === 0 ? 'left' : 'right';
+
+          // Check for overlap and adjust position
+          const lastCardBottom = lastPosition[side];
+          let currentTop = Math.max(idealTop, lastCardBottom + CARD_SPACING);
+
+          // Update the last position for the current side
+          // We use an estimated height, a more complex solution might measure the actual element
+          lastPosition[side] = currentTop + ESTIMATED_CARD_HEIGHT; 
 
           return (
             <TimelineEventCard
               key={`${timeline.id}-${index}`}
               event={event}
-              top={top}
+              top={currentTop}
               side={side}
             />
           );
