@@ -7,9 +7,17 @@ import TimelineColumn from './timeline-column';
 import YearScale from './year-scale';
 import CursorIndicator from './cursor-indicator';
 import { Frown } from 'lucide-react';
+import { parseDateToFractionalYear } from '@/lib/date-utils';
 
 const Y_AXIS_MULTIPLIER = 100; // pixels per year at zoom level 1
 const MIN_PX_BETWEEN_MARKERS = 60;
+
+interface TimelineViewProps {
+    timelines: Timeline[];
+    zoom: number;
+    onRemoveTimeline: (id: string) => void;
+}
+
 
 export default function TimelineView({ timelines, zoom, onRemoveTimeline }: TimelineViewProps) {
   const [cursorY, setCursorY] = useState<number | null>(null);
