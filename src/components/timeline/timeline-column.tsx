@@ -2,7 +2,6 @@
 
 import type { Timeline } from '@/types';
 import TimelineEventCard from './timeline-event-card';
-import TimeGapIndicator from './time-gap-indicator';
 
 interface TimelineColumnProps {
   timeline: Timeline;
@@ -14,8 +13,6 @@ interface TimelineColumnProps {
 
 const CARD_SPACING = 16; // 1rem
 const ESTIMATED_CARD_HEIGHT = 80; // Estimated height for an unexpanded card
-const GAP_THRESHOLD_YEARS = 50; // Compress gaps larger than this
-const COMPRESSED_GAP_HEIGHT = 100; // Height of the visual gap indicator
 
 export default function TimelineColumn({
   timeline,
@@ -35,34 +32,13 @@ export default function TimelineColumn({
     .sort((a, b) => (a.year as number) - (b.year as number));
 
   const renderedElements: React.ReactNode[] = [];
-  let lastEventYear = minYear;
-  let accumulatedOffset = 0;
-
+  
   sortedEvents.forEach((event, index) => {
     const year = event.year as number;
     const side = index % 2 === 0 ? 'left' : 'right';
 
-    // Check for large time gaps
-    const yearDiff = year - lastEventYear;
-    if (yearDiff > GAP_THRESHOLD_YEARS) {
-      const gapTop =
-        (lastEventYear - minYear) * yAxisMultiplier * zoom + accumulatedOffset;
-      const compressedTop = gapTop + COMPRESSED_GAP_HEIGHT;
-      accumulatedOffset +=
-        COMPRESSED_GAP_HEIGHT - yearDiff * yAxisMultiplier * zoom;
-      
-      renderedElements.push(
-        <TimeGapIndicator
-          key={`gap-${index}`}
-          startYear={Math.round(lastEventYear)}
-          endYear={Math.round(year)}
-          top={gapTop + 30}
-        />
-      );
-    }
-    
-    const idealTop = (year - minYear) * yAxisMultiplier * zoom + accumulatedOffset;
-    
+    const idealTop = (year - minYear) * yAxisMultiplier * zoom;
+
     // Check for overlap and adjust position
     const lastCardBottom = lastPosition[side];
     let currentTop = Math.max(idealTop, lastCardBottom + CARD_SPACING);
@@ -77,8 +53,6 @@ export default function TimelineColumn({
         side={side}
       />
     );
-
-    lastEventYear = year;
   });
 
 
