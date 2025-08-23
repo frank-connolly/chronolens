@@ -9,23 +9,36 @@ interface YearScaleProps {
   yAxisMultiplier: number;
 }
 
+const MIN_PX_PER_INTERVAL = 80;
+
 export default function YearScale({ minYear, maxYear, zoom, yAxisMultiplier }: YearScaleProps) {
   const years = useMemo(() => {
     const range = maxYear - minYear;
-    let interval = 100;
-    if (range / (100 * zoom) < 5) interval = 50;
-    if (range / (50 * zoom) < 5) interval = 25;
-    if (range / (25 * zoom) < 5) interval = 10;
-    if (range / (10 * zoom) < 5) interval = 5;
-    if (range / (5 * zoom) < 5) interval = 1;
+    const possibleIntervals = [1000, 500, 250, 100, 50, 25, 10, 5, 2, 1, 0.5, 0.25, 0.1];
+    
+    const idealInterval = MIN_PX_PER_INTERVAL / (yAxisMultiplier * zoom);
+
+    let interval = possibleIntervals[0];
+    for (const p of possibleIntervals) {
+      if (p < idealInterval) {
+        interval = p;
+        break;
+      }
+    }
+    
+    // Fallback for very high zoom
+    if (idealInterval < possibleIntervals[possibleIntervals.length -1]) {
+        interval = possibleIntervals[possibleIntervals.length -1];
+    }
+
 
     const startYear = Math.ceil(minYear / interval) * interval;
-    const yearMarkers = [];
+    const yearMarkers: number[] = [];
     for (let year = startYear; year <= maxYear; year += interval) {
       yearMarkers.push(year);
     }
     return yearMarkers;
-  }, [minYear, maxYear, zoom]);
+  }, [minYear, maxYear, zoom, yAxisMultiplier]);
 
   return (
     <div className="relative w-16 text-right shrink-0">
@@ -37,7 +50,7 @@ export default function YearScale({ minYear, maxYear, zoom, yAxisMultiplier }: Y
             className="absolute right-4 text-sm text-muted-foreground font-code"
             style={{ top: `${top}px` }}
           >
-            <span className="bg-background px-1">{year}</span>
+            <span className="bg-background px-1">{Number.isInteger(year) ? year : year.toFixed(2)}</span>
             <div className="absolute top-1/2 -translate-y-1/2 right-[-1rem] w-2 h-px bg-border"></div>
           </div>
         );

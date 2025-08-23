@@ -11,6 +11,8 @@ interface TimelineControlsProps {
   onZoomIn: () => void;
   onZoomOut: () => void;
   zoomLevel: number;
+  canZoomIn: boolean;
+  canZoomOut: boolean;
 }
 
 export default function TimelineControls({
@@ -18,6 +20,8 @@ export default function TimelineControls({
   isPending,
   onZoomIn,
   onZoomOut,
+  canZoomIn,
+  canZoomOut,
 }: TimelineControlsProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -51,11 +55,11 @@ export default function TimelineControls({
         </Button>
       </form>
       <div className="flex items-center gap-1 rounded-md border p-1">
-        <Button variant="ghost" size="icon" onClick={onZoomOut} className="h-8 w-8">
+        <Button variant="ghost" size="icon" onClick={onZoomOut} className="h-8 w-8" disabled={!canZoomOut}>
           <ZoomOut />
         </Button>
         <div className="w-px h-6 bg-border mx-1"></div>
-        <Button variant="ghost" size="icon" onClick={onZoomIn} className="h-8 w-8">
+        <Button variant="ghost" size="icon" onClick={onZoomIn} className="h-8 w-8" disabled={!canZoomIn}>
           <ZoomIn />
         </Button>
       </div>

@@ -97,6 +97,9 @@ export default function ChronoLensPage() {
     localStorage.removeItem(TIMELINES_STORAGE_KEY);
   }
 
+  const handleZoomIn = () => setZoom(z => Math.min(z * 1.5, 20));
+  const handleZoomOut = () => setZoom(z => Math.max(z / 1.5, 0.1));
+
   return (
     <div className="flex flex-col h-screen bg-background text-foreground">
       <header className="flex items-center justify-between p-4 border-b border-border/50 shadow-sm z-10 bg-background/80 backdrop-blur-sm">
@@ -108,9 +111,11 @@ export default function ChronoLensPage() {
            <TimelineControls
             onAddTimeline={addTimeline}
             isPending={isPending}
-            onZoomIn={() => setZoom(z => Math.min(z * 1.5, 20))}
-            onZoomOut={() => setZoom(z => Math.max(z / 1.5, 0.1))}
+            onZoomIn={handleZoomIn}
+            onZoomOut={handleZoomOut}
             zoomLevel={zoom}
+            canZoomIn={zoom < 20}
+            canZoomOut={zoom > 0.1}
           />
           {timelines.length > 0 && <Button variant="outline" onClick={handleClear}>Clear All</Button>}
         </div>
