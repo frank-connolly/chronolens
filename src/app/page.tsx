@@ -88,6 +88,10 @@ export default function ChronoLensPage() {
     });
   };
 
+  const removeTimeline = (id: string) => {
+    setTimelines(prev => prev.filter(timeline => timeline.id !== id));
+  };
+
   const handleClear = () => {
     setTimelines([]);
     localStorage.removeItem(TIMELINES_STORAGE_KEY);
@@ -117,7 +121,7 @@ export default function ChronoLensPage() {
             <Loader2 className="h-16 w-16 animate-spin text-primary" />
           </div>
         ) : (
-          <TimelineView timelines={timelines} zoom={zoom} />
+          <TimelineView timelines={timelines} zoom={zoom} onRemoveTimeline={removeTimeline} />
         )}
       </main>
     </div>

@@ -9,6 +9,7 @@ import { Frown } from 'lucide-react';
 interface TimelineViewProps {
   timelines: Timeline[];
   zoom: number;
+  onRemoveTimeline: (id: string) => void;
 }
 
 const Y_AXIS_MULTIPLIER = 20; // pixels per year at zoom level 1
@@ -45,7 +46,7 @@ const parseYear = (dateStr: string): number | null => {
   return year && !isNaN(year) ? year : null;
 }
 
-export default function TimelineView({ timelines, zoom }: TimelineViewProps) {
+export default function TimelineView({ timelines, zoom, onRemoveTimeline }: TimelineViewProps) {
   const [minYear, maxYear] = useMemo(() => {
     let min: number | null = null;
     let max: number | null = null;
@@ -94,7 +95,7 @@ export default function TimelineView({ timelines, zoom }: TimelineViewProps) {
           className="flex-1 flex gap-8 h-full"
           style={{ height: `${totalHeight}px` }}
         >
-          {timelines.map((timeline, index) => (
+          {timelines.map((timeline) => (
             <TimelineColumn
               key={timeline.id}
               timeline={timeline}
@@ -102,6 +103,7 @@ export default function TimelineView({ timelines, zoom }: TimelineViewProps) {
               zoom={zoom}
               yAxisMultiplier={Y_AXIS_MULTIPLIER}
               parseYear={parseYear}
+              onRemove={() => onRemoveTimeline(timeline.id)}
             />
           ))}
         </div>
