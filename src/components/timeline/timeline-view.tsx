@@ -2,50 +2,28 @@
 'use client';
 
 import React, { useMemo, useState, useRef } from 'react';
-import type { Timeline, TimelineEvent } from '@/types';
+import type { Timeline } from '@/types';
 import TimelineColumn from './timeline-column';
 import YearScale from './year-scale';
 import CursorIndicator from './cursor-indicator';
 import { Frown } from 'lucide-react';
-import { getMarkerLabel } from './get-marker-label';
-import { parseDateToFractionalYear } from '@/lib/date-utils';
-
-interface TimelineViewProps {
-  timelines: Timeline[];
-  zoom: number;
-  onRemoveTimeline: (id: string) => void;
-}
 
 const Y_AXIS_MULTIPLIER = 100; // pixels per year at zoom level 1
 const MIN_PX_BETWEEN_MARKERS = 60;
 
-// A new type that includes the calculated year for positioning
-type PositionedTimelineEvent = TimelineEvent & { fractionalYear: number | null };
-type PositionedTimeline = Omit<Timeline, 'events'> & { events: PositionedTimelineEvent[] };
-
 export default function TimelineView({ timelines, zoom, onRemoveTimeline }: TimelineViewProps) {
   const [cursorY, setCursorY] = useState<number | null>(null);
   const mainRef = useRef<HTMLDivElement>(null);
-
-  // Memoize the positioned timelines to avoid recalculating on every render
-  const positionedTimelines: PositionedTimeline[] = useMemo(() => {
-    return timelines.map(timeline => ({
-      ...timeline,
-      events: timeline.events.map(event => ({
-        ...event,
-        fractionalYear: parseDateToFractionalYear(event.date),
-      })),
-    }));
-  }, [timelines]);
   
   const [minYear, maxYear] = useMemo(() => {
     let min: number | null = null;
     let max: number | null = null;
-    positionedTimelines.forEach(timeline => {
+    timelines.forEach(timeline => {
       timeline.events.forEach(event => {
-        if (event.fractionalYear !== null) {
-          if (min === null || event.fractionalYear < min) min = event.fractionalYear;
-          if (max === null || event.fractionalYear > max) max = event.fractionalYear;
+        const fractionalYear = parseDateToFractionalYear(event.date);
+        if (fractionalYear !== null) {
+          if (min === null || fractionalYear < min) min = fractionalYear;
+          if (max === null || fractionalYear > max) max = fractionalYear;
         }
       });
     });
@@ -54,7 +32,7 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
       return [min - padding, max + padding];
     }
     return [1990, 2030];
-  }, [positionedTimelines]);
+  }, [timelines]);
   
   const yearMarkers = useMemo(() => {
     const pixelsPerYear = Y_AXIS_MULTIPLIER * zoom;
@@ -148,7 +126,7 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
             })}
           </div>
 
-          {positionedTimelines.map((timeline) => (
+          {timelines.map((timeline) => (
             <TimelineColumn
               key={timeline.id}
               timeline={timeline}

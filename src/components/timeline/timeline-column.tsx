@@ -6,6 +6,7 @@ import TimelineEventCard from './timeline-event-card';
 import { Button } from '../ui/button';
 import { X } from 'lucide-react';
 import { useMemo } from 'react';
+import { parseDateToFractionalYear } from '@/lib/date-utils';
 
 type PositionedTimelineEvent = TimelineEvent & { fractionalYear: number | null };
 interface PositionedTimeline {
@@ -15,7 +16,11 @@ interface PositionedTimeline {
 }
 
 interface TimelineColumnProps {
-  timeline: PositionedTimeline;
+  timeline: {
+    id: string;
+    title: string;
+    events: TimelineEvent[];
+  };
   minYear: number;
   zoom: number;
   yAxisMultiplier: number;
@@ -34,12 +39,17 @@ export default function TimelineColumn({
 }: TimelineColumnProps) {
 
   const positionedEvents = useMemo(() => {
-    const sortedEvents = timeline.events
+    const eventsWithFractionalYear = timeline.events.map(event => ({
+      ...event,
+      fractionalYear: parseDateToFractionalYear(event.date),
+    }));
+
+    const sortedEvents = eventsWithFractionalYear
       .filter(e => e.fractionalYear !== null)
       .sort((a, b) => a.fractionalYear! - b.fractionalYear!);
 
-    let lastCardY_left = 0;
-    let lastCardY_right = 0;
+    let lastCardY_left = -Infinity;
+    let lastCardY_right = -Infinity;
 
     return sortedEvents.map((event, index) => {
       const side = index % 2 === 0 ? 'left' : 'right';
@@ -66,7 +76,6 @@ export default function TimelineColumn({
 
   return (
     <div className="relative w-80 shrink-0 h-full">
-      {/* Sticky Header for the title */}
        <div 
         className="sticky top-0 z-30 py-4 bg-background/80 backdrop-blur-sm -mt-8 pt-8"
       >
@@ -85,12 +94,9 @@ export default function TimelineColumn({
         </div>
       </div>
 
-      {/* This container establishes the positioning context for the line and cards */}
       <div className="relative h-full">
-        {/* Vertical Line - This is the central axis for events */}
         <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-0.5 bg-border z-0" />
         
-        {/* Event Cards and Connectors Container */}
         <div className="relative">
           {positionedEvents.map((event, index) => (
             <TimelineEventCard

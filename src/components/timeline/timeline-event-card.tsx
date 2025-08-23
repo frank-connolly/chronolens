@@ -14,38 +14,28 @@ interface TimelineEventCardProps {
   side: 'left' | 'right';
 }
 
-const CARD_WIDTH = 144; // w-36
-const CONNECTOR_MARGIN = 16; // 1rem
-
 export default function TimelineEventCard({ event, eventY, cardY, side }: TimelineEventCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const cardHorizontalPosition = side === 'left' 
-    ? `left-0` 
-    : `right-0`;
-
   // SVG Path calculation
-  const startX = 0;
-  const startY = eventY;
-  const endX = side === 'left' ? -CONNECTOR_MARGIN : CONNECTOR_MARGIN;
-  const endY = cardY;
+  const startX = side === 'left' ? '100%' : '0%';
+  const startY = cardY;
+  const endX = side === 'left' ? '50%' : '50%';
+  const endY = eventY;
   
-  const midY = endY;
-
-  // Path from event dot on timeline to the card
-  const pathD = `M ${startX} ${startY} L ${endX} ${midY}`;
-
+  // Path from card to the event dot on timeline
+  const pathD = `M ${startX} ${startY} L ${endX} ${endY}`;
 
   return (
     <div
       className={cn(
         'absolute w-full h-full pointer-events-none',
-        isExpanded ? 'z-20' : 'z-10' // Bring card to front when expanded
+        isExpanded ? 'z-20' : 'z-10' 
       )}
-      style={{ left: side === 'left' ? 'auto' : '50%', right: side === 'right' ? 'auto' : '50%'}}
+      style={{ top: 0, left: 0 }}
     >
-      {/* SVG Connector */}
-      <svg className="absolute w-1/2 h-full overflow-visible">
+      {/* SVG Container needs to span the full column width and height */}
+      <svg className="absolute w-full h-full overflow-visible">
           <path d={pathD} stroke="hsl(var(--border))" strokeWidth="1" fill="none" />
       </svg>
       
@@ -53,16 +43,19 @@ export default function TimelineEventCard({ event, eventY, cardY, side }: Timeli
       <div
         className="absolute top-0 w-3 h-3 rounded-full bg-background border-2 border-accent"
         style={{
-          transform: `translate(-50%, ${eventY}px) translateY(-50%)`,
-          left: '0',
+          transform: `translateY(-50%)`,
+          left: '50%',
+          marginLeft: '-6px', // Center the dot on the line
+          top: `${eventY}px`,
         }}
       />
       
       {/* Event Card */}
       <div
         className={cn(
-          'absolute w-[calc(50%-1rem)] pointer-events-auto', // 1rem is the connector margin
-          side === 'left' ? 'left-0' : 'right-0'
+          'absolute w-[calc(50%-1rem)] pointer-events-auto', // 1rem is some spacing margin
+          side === 'left' ? 'left-0' : 'right-auto',
+          side === 'right' ? 'left-[calc(50%+1rem)]' : 'left-auto'
         )}
         style={{ top: `${cardY}px`, transform: `translateY(-50%)` }}
       >
