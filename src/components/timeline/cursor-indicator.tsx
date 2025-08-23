@@ -7,14 +7,15 @@ interface CursorIndicatorProps {
 export default function CursorIndicator({ top }: CursorIndicatorProps) {
   return (
     <div
-      className="pointer-events-none absolute left-0 right-0 z-0"
+      className="pointer-events-none absolute left-0 right-0"
       style={{
         transform: `translateY(${top}px)`,
+        zIndex: 1,
       }}
     >
       <div className="relative">
         {/* Line */}
-        <div className="absolute w-full h-px bg-accent/50"></div>
+        <div className="absolute w-full h-px bg-accent/50 -translate-y-1/2"></div>
       </div>
     </div>
   );

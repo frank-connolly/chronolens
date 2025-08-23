@@ -104,7 +104,8 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    setCursorY(e.clientY - rect.top);
+    const scrollTop = e.currentTarget.scrollTop;
+    setCursorY(e.clientY - rect.top + scrollTop);
   };
 
   const handleMouseLeave = () => {
@@ -128,7 +129,7 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
 
   return (
     <div 
-      className="relative w-full h-full p-8"
+      className="relative w-full h-full"
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
@@ -137,7 +138,7 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
             top={cursorY}
         />
       )}
-      <div className="flex gap-8 h-full">
+      <div className="flex gap-8 h-full p-8">
         <YearScale
           minYear={minYear}
           maxYear={maxYear}
