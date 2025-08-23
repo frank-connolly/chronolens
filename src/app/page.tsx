@@ -9,6 +9,8 @@ import TimelineControls from '@/components/timeline/timeline-controls';
 import { History, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+const TIMELINES_STORAGE_KEY = 'chronoLensTimelines';
+
 export default function ChronoLensPage() {
   const [timelines, setTimelines] = useState<Timeline[]>([]);
   const [zoom, setZoom] = useState(1);
@@ -16,6 +18,45 @@ export default function ChronoLensPage() {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const { toast } = useToast();
   const mainContainerRef = useRef<HTMLDivElement>(null);
+
+  // Load timelines from localStorage on initial render
+  useEffect(() => {
+    try {
+      const savedTimelines = localStorage.getItem(TIMELINES_STORAGE_KEY);
+      if (savedTimelines) {
+        setTimelines(JSON.parse(savedTimelines));
+        setIsInitialLoading(false);
+      } else {
+        // If no saved data, fetch the default timeline
+        startTransition(async () => {
+          const { data, error } = await getTimelineForTopic("History of the Internet");
+          if (data) {
+            setTimelines([{ ...data, id: 'history-of-the-internet' }]);
+          } else if(error) {
+             toast({
+              title: "Could not load initial timeline",
+              description: error,
+              variant: "destructive",
+            })
+          }
+          setIsInitialLoading(false);
+        });
+      }
+    } catch (error) {
+      console.error("Failed to parse timelines from localStorage", error);
+      setIsInitialLoading(false); // Stop loading even if there's an error
+    }
+  }, [toast]);
+
+  // Save timelines to localStorage whenever they change
+  useEffect(() => {
+    // We don't save during initial loading to prevent overwriting stored data
+    // with a potentially empty or default state before hydration is complete.
+    if (!isInitialLoading) {
+      localStorage.setItem(TIMELINES_STORAGE_KEY, JSON.stringify(timelines));
+    }
+  }, [timelines, isInitialLoading]);
+
 
   const addTimeline = (topic: string) => {
     if (!topic || timelines.some(t => t.title.toLowerCase() === topic.toLowerCase())) {
@@ -47,26 +88,9 @@ export default function ChronoLensPage() {
     });
   };
 
-  useEffect(() => {
-    const fetchInitialTimeline = async () => {
-      setIsInitialLoading(true);
-      const { data, error } = await getTimelineForTopic("History of the Internet");
-      if (data) {
-        setTimelines([{ ...data, id: 'history-of-the-internet' }]);
-      } else if(error) {
-         toast({
-          title: "Could not load initial timeline",
-          description: error,
-          variant: "destructive",
-        })
-      }
-      setIsInitialLoading(false);
-    };
-    fetchInitialTimeline();
-  }, [toast]);
-
   const handleClear = () => {
     setTimelines([]);
+    localStorage.removeItem(TIMELINES_STORAGE_KEY);
   }
 
   return (
