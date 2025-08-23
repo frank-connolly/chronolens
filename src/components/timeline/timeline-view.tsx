@@ -2,13 +2,13 @@
 'use client';
 
 import React, { useMemo, useState, useRef } from 'react';
-import type { Timeline } from '@/types';
+import type { Timeline, TimelineEvent } from '@/types';
 import TimelineColumn from './timeline-column';
 import YearScale from './year-scale';
 import CursorIndicator from './cursor-indicator';
 import { Frown } from 'lucide-react';
 import { getMarkerLabel } from './get-marker-label';
-import { parseYear } from './parse-year';
+import { parseDateToFractionalYear } from '@/lib/date-utils';
 
 interface TimelineViewProps {
   timelines: Timeline[];
@@ -19,19 +19,33 @@ interface TimelineViewProps {
 const Y_AXIS_MULTIPLIER = 100; // pixels per year at zoom level 1
 const MIN_PX_BETWEEN_MARKERS = 60;
 
-export default function TimelineView({ timelines, zoom, onRemoveTimeline }: TimelineViewProps) {
-  const [cursorY, setCursorY] = useState<number | null>(null);
-  const mainRef = useRef<HTMLDivElement>(null);
+// A new type that includes the calculated year for positioning
+type PositionedTimelineEvent = TimelineEvent & { fractionalYear: number | null };
+type PositionedTimeline = Omit<Timeline, 'events'> & { events: PositionedTimelineEvent[] };
 
+export default function TimelineView({ timelines, zoom, onRemoveTimeline }: TimelineViewProps) {
+  const mainRef = useRef<HTMLDivElement>(null);
+  const [cursorY, setCursorY] = useState<number | null>(null);
+
+  // Memoize the positioned timelines to avoid recalculating on every render
+  const positionedTimelines: PositionedTimeline[] = useMemo(() => {
+    return timelines.map(timeline => ({
+      ...timeline,
+      events: timeline.events.map(event => ({
+        ...event,
+        fractionalYear: parseDateToFractionalYear(event.date),
+      })),
+    }));
+  }, [timelines]);
+  
   const [minYear, maxYear] = useMemo(() => {
     let min: number | null = null;
     let max: number | null = null;
-    timelines.forEach(timeline => {
+    positionedTimelines.forEach(timeline => {
       timeline.events.forEach(event => {
-        const year = parseYear(event.date);
-        if (year !== null) {
-          if (min === null || year < min) min = year;
-          if (max === null || year > max) max = year;
+        if (event.fractionalYear !== null) {
+          if (min === null || event.fractionalYear < min) min = event.fractionalYear;
+          if (max === null || event.fractionalYear > max) max = event.fractionalYear;
         }
       });
     });
@@ -40,7 +54,18 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
       return [min - padding, max + padding];
     }
     return [1990, 2030];
-  }, [timelines]);
+  }, [positionedTimelines]);
+  
+  // This must come after the state and refs are declared
+  if (timelines.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-8">
+        <Frown className="h-24 w-24 mb-4" />
+        <h2 className="text-2xl font-headline">Nothing to see here... yet.</h2>
+        <p className="mt-2 max-w-md">Use the search bar above to add a timeline for a person, country, or historical event to begin your journey through time.</p>
+      </div>
+    );
+  }
 
   const yearMarkers = useMemo(() => {
     const pixelsPerYear = Y_AXIS_MULTIPLIER * zoom;
@@ -72,27 +97,20 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
     return minYear + (cursorY + scrollTop) / (Y_AXIS_MULTIPLIER * zoom);
   }, [cursorY, minYear, zoom]);
 
+
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    // The main container has p-8, which is 2rem or 32px. We need to subtract this.
     const rect = e.currentTarget.getBoundingClientRect();
-    setCursorY(e.clientY - rect.top);
+    const paddingTop = parseInt(window.getComputedStyle(e.currentTarget).paddingTop, 10);
+    setCursorY(e.clientY - rect.top - paddingTop);
   };
 
   const handleMouseLeave = () => {
     setCursorY(null);
   };
-  
-  if (timelines.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-8">
-        <Frown className="h-24 w-24 mb-4" />
-        <h2 className="text-2xl font-headline">Nothing to see here... yet.</h2>
-        <p className="mt-2 max-w-md">Use the search bar above to add a timeline for a person, country, or historical event to begin your journey through time.</p>
-      </div>
-    );
-  }
 
   const totalHeight = (maxYear - minYear) * Y_AXIS_MULTIPLIER * zoom;
-
+  
   return (
     <div 
       className="relative w-full h-full"
@@ -131,14 +149,13 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
             })}
           </div>
 
-          {timelines.map((timeline) => (
+          {positionedTimelines.map((timeline) => (
             <TimelineColumn
               key={timeline.id}
               timeline={timeline}
               minYear={minYear}
               zoom={zoom}
               yAxisMultiplier={Y_AXIS_MULTIPLIER}
-              parseYear={parseYear}
               onRemove={() => onRemoveTimeline(timeline.id)}
             />
           ))}

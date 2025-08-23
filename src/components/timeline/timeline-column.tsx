@@ -1,17 +1,24 @@
 
 'use client';
 
-import type { Timeline } from '@/types';
+import type { TimelineEvent } from '@/types';
 import TimelineEventCard from './timeline-event-card';
 import { Button } from '../ui/button';
 import { X } from 'lucide-react';
 
+// A new type that includes the calculated year for positioning
+type PositionedTimelineEvent = TimelineEvent & { fractionalYear: number | null };
+interface PositionedTimeline {
+  id: string;
+  title: string;
+  events: PositionedTimelineEvent[];
+}
+
 interface TimelineColumnProps {
-  timeline: Timeline;
+  timeline: PositionedTimeline;
   minYear: number;
   zoom: number;
   yAxisMultiplier: number;
-  parseYear: (dateStr: string) => number | null;
   onRemove: () => void;
 }
 
@@ -23,7 +30,6 @@ export default function TimelineColumn({
   minYear,
   zoom,
   yAxisMultiplier,
-  parseYear,
   onRemove,
 }: TimelineColumnProps) {
   const lastPosition: { left: number; right: number } = {
@@ -32,14 +38,13 @@ export default function TimelineColumn({
   };
 
   const sortedEvents = [...timeline.events]
-    .map(event => ({ ...event, year: parseYear(event.date) }))
-    .filter(event => event.year !== null)
-    .sort((a, b) => (a.year as number) - (b.year as number));
+    .filter(event => event.fractionalYear !== null)
+    .sort((a, b) => (a.fractionalYear as number) - (b.fractionalYear as number));
 
   const renderedElements: React.ReactNode[] = [];
   
   sortedEvents.forEach((event, index) => {
-    const year = event.year as number;
+    const year = event.fractionalYear as number;
     const side = index % 2 === 0 ? 'left' : 'right';
 
     const idealTop = (year - minYear) * yAxisMultiplier * zoom;
