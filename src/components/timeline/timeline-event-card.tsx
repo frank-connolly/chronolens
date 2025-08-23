@@ -14,22 +14,24 @@ interface TimelineEventCardProps {
   side: 'left' | 'right';
 }
 
+const PADDING_OFFSET = 32; // This compensates for the p-8 on the main container
+
 export default function TimelineEventCard({ event, eventY, cardY, side }: TimelineEventCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   // SVG Path calculation
   // Start the line from the center of the card's attachment side
   const cardStartX = side === 'left' ? '100%' : '0%';
-  const cardStartY = cardY; 
+  const finalCardY = cardY + PADDING_OFFSET;
   
   // The line bends towards the center timeline
   const controlX = '50%';
   
   // The path ends at the event dot on the timeline
   const eventDotX = '50%';
-  const eventDotY = eventY;
+  const finalEventY = eventY + PADDING_OFFSET;
 
-  const pathD = `M ${cardStartX} ${cardStartY} C ${controlX} ${cardStartY}, ${controlX} ${eventDotY}, ${eventDotX} ${eventDotY}`;
+  const pathD = `M ${cardStartX} ${finalCardY} C ${controlX} ${finalCardY}, ${controlX} ${finalEventY}, ${eventDotX} ${finalEventY}`;
 
 
   return (
@@ -51,7 +53,7 @@ export default function TimelineEventCard({ event, eventY, cardY, side }: Timeli
         style={{
           left: '50%',
           top: 0,
-          transform: `translate(-50%, ${eventY - 6}px)`, // Center the dot on the line
+          transform: `translate(-50%, ${finalEventY - 6}px)`, // Center the dot on the line
         }}
       />
       
@@ -62,7 +64,7 @@ export default function TimelineEventCard({ event, eventY, cardY, side }: Timeli
           side === 'left' ? 'left-0' : 'right-auto',
           side === 'right' ? 'left-[calc(50%+1rem)]' : 'left-auto'
         )}
-        style={{ top: 0, transform: `translateY(${cardY - 37}px)` }} // 37 is half of default card height
+        style={{ top: 0, transform: `translateY(${finalCardY - 37}px)` }} // 37 is half of default card height
       >
          <Card 
           className="shadow-md hover:shadow-xl transition-shadow duration-300 border-primary/20 cursor-pointer"
