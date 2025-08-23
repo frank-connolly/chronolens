@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo } from 'react';
@@ -5,17 +6,22 @@ import { getMarkerLabel } from './get-marker-label';
 
 interface YearScaleProps {
   minYear: number;
-  maxYear: number;
   zoom: number;
   yAxisMultiplier: number;
   cursorYear: number | null;
   yearMarkers: number[];
 }
 
-const MIN_PX_BETWEEN_MARKERS = 60;
-
-export default function YearScale({ minYear, maxYear, zoom, yAxisMultiplier, cursorYear, yearMarkers }: YearScaleProps) {
-  const cursorLabel = cursorYear !== null ? getMarkerLabel(cursorYear, 'month') : '';
+export default function YearScale({ minYear, zoom, yAxisMultiplier, cursorYear, yearMarkers }: YearScaleProps) {
+  const cursorLabel = useMemo(() => {
+    if (cursorYear === null) return '';
+    // Determine the most appropriate label based on zoom level.
+    const pixelsPerYear = yAxisMultiplier * zoom;
+    if (pixelsPerYear > 365 * 2) { // arbitrary threshold for showing days
+        return getMarkerLabel(cursorYear, 'day');
+    }
+    return getMarkerLabel(cursorYear, 'month');
+  }, [cursorYear, zoom, yAxisMultiplier]);
 
   return (
     <div className="relative w-24 text-right shrink-0">

@@ -11,15 +11,15 @@ export function getMarkerLabel(fractionalYear: number, type: 'year' | 'month' | 
     return year.toString();
   }
   
-  const isLeap = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
-  const daysInYear = isLeap ? 366 : 365;
+  // Use a fixed 365.25 days for calculation simplicity across years
+  const daysInYear = 365.25;
 
-  let dayOfYear = Math.round(remainder * daysInYear);
-  if (dayOfYear >= daysInYear) {
-      // This can happen due to floating point inaccuracies, clamp it.
-      dayOfYear = daysInYear -1;
-  }
-  const date = new Date(Date.UTC(year, 0, dayOfYear + 1)); 
+  let dayOfYear = Math.floor(remainder * daysInYear);
+
+  // Create a date object in UTC to avoid timezone issues.
+  // Start with Jan 1st of the year and add the number of days.
+  const date = new Date(Date.UTC(year, 0, 1));
+  date.setUTCDate(date.getUTCDate() + dayOfYear);
 
   if (type === 'month') {
     return `${MONTH_NAMES[date.getUTCMonth()]} ${date.getUTCFullYear()}`;

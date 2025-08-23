@@ -18,53 +18,46 @@ interface TimelineViewProps {
 const Y_AXIS_MULTIPLIER = 100; // pixels per year at zoom level 1
 const MIN_PX_BETWEEN_MARKERS = 60;
 
-
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-
 const parseYear = (dateStr: string): number | null => {
     if (!dateStr) return null;
     const trimmedDate = dateStr.trim();
-
-    // Handles "Month YYYY" format (e.g., "December 1948")
-    const monthYearMatch = trimmedDate.match(
-      new RegExp(`^(${MONTHS.join('|')})\\s+(\\d{4})$`, 'i')
-    );
+    
+    // Attempt to match "Month YYYY" (e.g., "December 1948")
+    const monthYearMatch = trimmedDate.match(/^(january|february|march|april|may|june|july|august|september|october|november|december)\s+(\d{4})$/i);
     if (monthYearMatch) {
-        const monthName = monthYearMatch[1];
+        const monthName = monthYearMatch[1].toLowerCase();
         const year = parseInt(monthYearMatch[2], 10);
-        const monthIndex = MONTHS.findIndex(m => m.toLowerCase() === monthName.toLowerCase());
+        const monthIndex = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'].indexOf(monthName);
         if (monthIndex !== -1) {
-            // Mid-month approximation
-            return year + ((monthIndex + 0.5) / 12);
+            // Position in the middle of the month for better average placement
+            return year + (monthIndex + 0.5) / 12;
         }
     }
-
-    // Handles "YYYY" format
+    
+    // Attempt to match just a year "YYYY"
     if (/^\d{4}$/.test(trimmedDate)) {
+        // Position at the start of the year
         return parseInt(trimmedDate, 10);
     }
     
-    // Fallback for full dates using UTC
+    // Fallback for full dates using UTC to avoid timezone issues
     const date = new Date(trimmedDate);
     if (!isNaN(date.getTime())) {
         const year = date.getUTCFullYear();
         const startOfYear = Date.UTC(year, 0, 1);
-        const endOfYear = Date.UTC(year + 1, 0, 1);
-        const totalTimeInYear = endOfYear - startOfYear;
-        const timeFromStart = date.getTime() - startOfYear;
-
-        if (totalTimeInYear > 0) {
-            return year + (timeFromStart / totalTimeInYear);
+        const timeInYear = date.getTime() - startOfYear;
+        const yearDuration = Date.UTC(year + 1, 0, 1) - startOfYear;
+        
+        if (yearDuration > 0) {
+            return year + (timeInYear / yearDuration);
         }
         return year;
     }
-
+    
     // Final fallback for formats like "c. 1950" or other unparseable strings.
     const fallbackYearMatch = trimmedDate.match(/\b(\d{4})\b/);
     return fallbackYearMatch ? parseInt(fallbackYearMatch[0], 10) : null;
 };
-
-
 
 export default function TimelineView({ timelines, zoom, onRemoveTimeline }: TimelineViewProps) {
   const [minYear, maxYear] = useMemo(() => {
@@ -124,10 +117,7 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    const scrollTop = e.currentTarget.scrollTop;
-    const style = window.getComputedStyle(e.currentTarget);
-    const paddingTop = parseFloat(style.paddingTop);
-    setCursorY(e.clientY - rect.top + scrollTop - paddingTop);
+    setCursorY(e.clientY - rect.top);
   };
 
   const handleMouseLeave = () => {
@@ -145,8 +135,14 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
   }
 
   const totalHeight = (maxYear - minYear) * Y_AXIS_MULTIPLIER * zoom;
-  const pixelsPerYear = Y_AXIS_MULTIPLIER * zoom;
-  const cursorYear = cursorY !== null ? minYear + cursorY / pixelsPerYear : null;
+  
+  const mainRef = React.useRef<HTMLDivElement>(null);
+  
+  const cursorYear = useMemo(() => {
+    if (cursorY === null || !mainRef.current) return null;
+    const scrollTop = mainRef.current.scrollTop;
+    return minYear + (cursorY + scrollTop) / (Y_AXIS_MULTIPLIER * zoom);
+  }, [cursorY, minYear, zoom, timelines]);
 
 
   return (
@@ -154,23 +150,23 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
       className="relative w-full h-full"
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
+      ref={mainRef}
     >
-       {cursorY !== null && cursorYear !== null && (
+       {cursorY !== null && cursorYear !== null && mainRef.current && (
          <CursorIndicator
-            top={cursorY}
+            top={cursorY + mainRef.current.scrollTop}
         />
       )}
       <div className="flex gap-8 h-full p-8">
         <YearScale
           minYear={minYear}
-          maxYear={maxYear}
           zoom={zoom}
           yAxisMultiplier={Y_AXIS_MULTIPLIER}
           cursorYear={cursorYear}
           yearMarkers={yearMarkers}
         />
         <div 
-          className="relative flex-1 flex gap-8 h-full"
+          className="relative flex-1 flex gap-8"
           style={{ height: `${totalHeight}px` }}
         >
            {/* Background Year Lines */}
