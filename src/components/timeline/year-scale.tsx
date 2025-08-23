@@ -76,10 +76,10 @@ export default function YearScale({ minYear, maxYear, zoom, yAxisMultiplier }: Y
     const pixelsPerYear = yAxisMultiplier * zoom;
     if (pixelsPerYear <= 0) return [];
     
-    const idealInterval = MIN_PX_PER_INTERVAL / pixelsPerYear;
+    const idealIntervalInYears = MIN_PX_PER_INTERVAL / pixelsPerYear;
     
     // Find the best interval from our predefined list
-    const bestInterval = INTERVALS.find(i => i.value >= idealInterval) || INTERVALS[INTERVALS.length - 1];
+    const bestInterval = INTERVALS.find(i => i.value >= idealIntervalInYears) || INTERVALS[INTERVALS.length - 1];
     
     const yearMarkers: { value: number; label: string }[] = [];
     const { value: interval, type } = bestInterval;
