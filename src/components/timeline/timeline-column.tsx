@@ -9,11 +9,6 @@ import { useMemo } from 'react';
 import { parseDateToFractionalYear } from '@/lib/date-utils';
 
 type PositionedTimelineEvent = TimelineEvent & { fractionalYear: number | null };
-interface PositionedTimeline {
-  id: string;
-  title: string;
-  events: PositionedTimelineEvent[];
-}
 
 interface TimelineColumnProps {
   timeline: {
@@ -39,13 +34,12 @@ export default function TimelineColumn({
 }: TimelineColumnProps) {
 
   const positionedEvents = useMemo(() => {
-    const eventsWithFractionalYear = timeline.events.map(event => ({
+    const eventsWithFractionalYear: PositionedTimelineEvent[] = timeline.events.map(event => ({
       ...event,
       fractionalYear: parseDateToFractionalYear(event.date),
-    }));
+    })).filter(e => e.fractionalYear !== null);
 
     const sortedEvents = eventsWithFractionalYear
-      .filter(e => e.fractionalYear !== null)
       .sort((a, b) => a.fractionalYear! - b.fractionalYear!);
 
     let lastCardY_left = -Infinity;
@@ -53,13 +47,14 @@ export default function TimelineColumn({
 
     return sortedEvents.map((event, index) => {
       const side = index % 2 === 0 ? 'left' : 'right';
+      // This is the single source of truth for the event's chronological position.
       const eventY = (event.fractionalYear! - minYear) * yAxisMultiplier * zoom;
 
       let cardY = eventY;
       
       const lastCardY = side === 'left' ? lastCardY_left : lastCardY_right;
 
-      // Ensure the card doesn't overlap with the one above it on the same side
+      // Basic overlap avoidance.
       if (cardY < lastCardY + ESTIMATED_CARD_HEIGHT) {
         cardY = lastCardY + ESTIMATED_CARD_HEIGHT;
       }
@@ -95,9 +90,10 @@ export default function TimelineColumn({
       </div>
 
       <div className="relative h-full">
+        {/* The vertical line */}
         <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-0.5 bg-border z-0" />
         
-        <div className="relative">
+        <div className="relative h-full">
           {positionedEvents.map((event, index) => (
             <TimelineEventCard
               key={`${timeline.id}-${event.date}-${index}`}
