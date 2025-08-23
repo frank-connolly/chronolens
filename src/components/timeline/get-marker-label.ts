@@ -13,8 +13,7 @@ export function getMarkerLabel(fractionalYear: number, type: 'year' | 'month' | 
   
   // Use a fixed 365.25 days for calculation simplicity across years
   const daysInYear = 365.25;
-
-  let dayOfYear = Math.floor(remainder * daysInYear);
+  const dayOfYear = Math.floor(remainder * daysInYear);
 
   // Create a date object in UTC to avoid timezone issues.
   // Start with Jan 1st of the year and add the number of days.

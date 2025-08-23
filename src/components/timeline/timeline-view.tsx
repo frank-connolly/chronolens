@@ -46,7 +46,7 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
     const pixelsPerYear = Y_AXIS_MULTIPLIER * zoom;
     if (pixelsPerYear <= 0) return [];
 
-    const intervals = [1000, 500, 250, 100, 50, 25, 10, 5, 1, 0.5, 0.25, 0.1];
+    const intervals = [1000, 500, 250, 100, 50, 25, 10, 5, 1];
     let interval = 1;
 
     for (const i of intervals) {
@@ -55,16 +55,6 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
       }
     }
     
-    if(interval < 1) { // monthly or daily markers
-        const pixelsPerDay = pixelsPerYear / 365.25;
-        if(pixelsPerDay * 90 >= MIN_PX_BETWEEN_MARKERS) {
-            // quarterly would be nice
-        } else if (pixelsPerDay * 30 >= MIN_PX_BETWEEN_MARKERS) {
-            // monthly
-        }
-        // for now just stick to years
-    }
-
     const markers = [];
     const start = Math.ceil(minYear / interval) * interval;
 
@@ -81,7 +71,6 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
     const scrollTop = mainRef.current.scrollTop;
     return minYear + (cursorY + scrollTop) / (Y_AXIS_MULTIPLIER * zoom);
   }, [cursorY, minYear, zoom]);
-
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
