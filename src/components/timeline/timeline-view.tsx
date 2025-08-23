@@ -6,6 +6,7 @@ import TimelineColumn from './timeline-column';
 import YearScale from './year-scale';
 import CursorIndicator from './cursor-indicator';
 import { Frown } from 'lucide-react';
+import { getMarkerLabel } from './get-marker-label';
 
 interface TimelineViewProps {
   timelines: Timeline[];
@@ -14,6 +15,8 @@ interface TimelineViewProps {
 }
 
 const Y_AXIS_MULTIPLIER = 100; // pixels per year at zoom level 1
+const MIN_PX_BETWEEN_MARKERS = 60;
+
 
 const parseYear = (dateStr: string): number | null => {
   if (!dateStr) return null;
@@ -56,6 +59,40 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
     }
     return [1990, 2030];
   }, [timelines]);
+
+  const yearMarkers = useMemo(() => {
+    const pixelsPerYear = Y_AXIS_MULTIPLIER * zoom;
+    if (pixelsPerYear <= 0) return [];
+
+    const intervals = [1000, 500, 250, 100, 50, 25, 10, 5, 1, 0.5, 0.25, 0.1];
+    let interval = 1;
+
+    for (const i of intervals) {
+      if (i * pixelsPerYear >= MIN_PX_BETWEEN_MARKERS) {
+        interval = i;
+      }
+    }
+    
+    if(interval < 1) { // monthly or daily markers
+        const pixelsPerDay = pixelsPerYear / 365.25;
+        if(pixelsPerDay * 90 >= MIN_PX_BETWEEN_MARKERS) {
+            // quarterly would be nice
+        } else if (pixelsPerDay * 30 >= MIN_PX_BETWEEN_MARKERS) {
+            // monthly
+        }
+        // for now just stick to years
+    }
+
+    const markers = [];
+    const start = Math.ceil(minYear / interval) * interval;
+
+    for (let year = start; year <= maxYear; year += interval) {
+      if(year >= minYear){
+        markers.push(Math.round(year));
+      }
+    }
+    return markers;
+  }, [minYear, maxYear, zoom]);
 
   const [cursorY, setCursorY] = useState<number | null>(null);
 
@@ -101,11 +138,26 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
           zoom={zoom}
           yAxisMultiplier={Y_AXIS_MULTIPLIER}
           cursorYear={cursorYear}
+          yearMarkers={yearMarkers}
         />
         <div 
-          className="flex-1 flex gap-8 h-full"
+          className="relative flex-1 flex gap-8 h-full"
           style={{ height: `${totalHeight}px` }}
         >
+           {/* Background Year Lines */}
+          <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+            {yearMarkers.map((year) => {
+              const top = (year - minYear) * Y_AXIS_MULTIPLIER * zoom;
+              return (
+                <div
+                  key={`line-${year}`}
+                  className="absolute w-full h-px bg-border/50 -z-20"
+                  style={{ top: `${top}px` }}
+                />
+              );
+            })}
+          </div>
+
           {timelines.map((timeline) => (
             <TimelineColumn
               key={timeline.id}

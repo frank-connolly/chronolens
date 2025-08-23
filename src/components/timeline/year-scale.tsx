@@ -9,46 +9,12 @@ interface YearScaleProps {
   zoom: number;
   yAxisMultiplier: number;
   cursorYear: number | null;
+  yearMarkers: number[];
 }
 
 const MIN_PX_BETWEEN_MARKERS = 60;
 
-export default function YearScale({ minYear, maxYear, zoom, yAxisMultiplier, cursorYear }: YearScaleProps) {
-  const yearMarkers = useMemo(() => {
-    const pixelsPerYear = yAxisMultiplier * zoom;
-    if (pixelsPerYear <= 0) return [];
-
-    const intervals = [1000, 500, 250, 100, 50, 25, 10, 5, 1, 0.5, 0.25, 0.1];
-    let interval = 1;
-
-    for (const i of intervals) {
-      if (i * pixelsPerYear >= MIN_PX_BETWEEN_MARKERS) {
-        interval = i;
-      }
-    }
-    
-    if(interval < 1) { // monthly or daily markers
-        const pixelsPerDay = pixelsPerYear / 365.25;
-        if(pixelsPerDay * 90 >= MIN_PX_BETWEEN_MARKERS) {
-            // quarterly would be nice
-        } else if (pixelsPerDay * 30 >= MIN_PX_BETWEEN_MARKERS) {
-            // monthly
-        }
-        // for now just stick to years
-    }
-
-
-    const markers = [];
-    const start = Math.ceil(minYear / interval) * interval;
-
-    for (let year = start; year <= maxYear; year += interval) {
-      if(year >= minYear){
-        markers.push(Math.round(year));
-      }
-    }
-    return markers;
-  }, [minYear, maxYear, zoom, yAxisMultiplier]);
-
+export default function YearScale({ minYear, maxYear, zoom, yAxisMultiplier, cursorYear, yearMarkers }: YearScaleProps) {
   const cursorLabel = cursorYear !== null ? getMarkerLabel(cursorYear, 'month') : '';
 
   return (
