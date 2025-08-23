@@ -5,14 +5,11 @@ interface CursorIndicatorProps {
 }
 
 export default function CursorIndicator({ top }: CursorIndicatorProps) {
-  // We add 32px (2rem) to the top position to account for the p-8 on the container
-  const adjustedTop = top + 32;
-
   return (
     <div
       className="pointer-events-none absolute left-0 right-0"
       style={{
-        transform: `translateY(${adjustedTop}px)`,
+        transform: `translateY(${top}px)`,
         zIndex: 1,
       }}
     >
