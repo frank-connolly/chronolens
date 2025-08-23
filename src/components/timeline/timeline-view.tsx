@@ -13,8 +13,33 @@ interface TimelineViewProps {
 
 const Y_AXIS_MULTIPLIER = 20; // pixels per year at zoom level 1
 
+/**
+ * Parses a date string into a fractional year.
+ * Handles "YYYY", "Month YYYY", "Month Day, YYYY".
+ * Returns null if parsing fails.
+ */
 const parseYear = (dateStr: string): number | null => {
   if (!dateStr) return null;
+
+  // Attempt to parse with Date constructor
+  const date = new Date(dateStr);
+  if (!isNaN(date.getTime())) {
+    const year = date.getFullYear();
+    // Check if it's a real date or just a year
+    // `new Date('2001')` gives Dec 31, 2000 in some timezones.
+    // `new Date('2001-01-01T00:00:00')` is more reliable.
+    // Let's check if the original string just contained a year.
+    const yearMatch = dateStr.match(/^\s*(\d{4})\s*$/);
+    if(yearMatch) {
+        return parseInt(yearMatch[1], 10);
+    }
+    
+    // It's a more complete date, so we can get month for fractional year
+    const month = date.getMonth(); // 0-11
+    return year + month / 12;
+  }
+  
+  // Fallback for just year "YYYY" format that Date might misinterpret
   const match = dateStr.match(/\b\d{3,4}\b/);
   const year = match ? parseInt(match[0], 10) : null;
   return year && !isNaN(year) ? year : null;
@@ -34,6 +59,10 @@ export default function TimelineView({ timelines, zoom }: TimelineViewProps) {
       });
     });
     if (min !== null && max !== null) {
+      // Ensure min and max are at least 1 year apart for padding
+      if (max - min < 1) {
+        max = min + 1;
+      }
       const padding = Math.ceil((max - min) * 0.05);
       return [min - padding, max + padding];
     }
