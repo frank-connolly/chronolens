@@ -5,11 +5,14 @@ interface CursorIndicatorProps {
 }
 
 export default function CursorIndicator({ top }: CursorIndicatorProps) {
+  // The additional 32px accounts for the 8 (2rem) of padding on the parent container
+  const adjustedTop = top + 32;
+
   return (
     <div
       className="pointer-events-none absolute left-0 right-0"
       style={{
-        transform: `translateY(${top}px)`,
+        transform: `translateY(${adjustedTop}px)`,
         zIndex: 1,
       }}
     >

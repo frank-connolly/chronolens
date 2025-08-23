@@ -25,7 +25,8 @@ type PositionedTimeline = Omit<Timeline, 'events'> & { events: PositionedTimelin
 
 export default function TimelineView({ timelines, zoom, onRemoveTimeline }: TimelineViewProps) {
   const [cursorY, setCursorY] = useState<number | null>(null);
-  
+  const mainRef = useRef<HTMLDivElement>(null);
+
   // Memoize the positioned timelines to avoid recalculating on every render
   const positionedTimelines: PositionedTimeline[] = useMemo(() => {
     return timelines.map(timeline => ({
@@ -79,27 +80,26 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
     return markers;
   }, [minYear, maxYear, zoom]);
 
-  const mainRef = useRef<HTMLDivElement>(null);
   
   const cursorYear = useMemo(() => {
-    if (cursorY === null || !mainRef.current) return null;
-    const scrollTop = mainRef.current.scrollTop;
-    return minYear + (cursorY + scrollTop) / (Y_AXIS_MULTIPLIER * zoom);
+    if (cursorY === null) return null;
+    return minYear + cursorY / (Y_AXIS_MULTIPLIER * zoom);
   }, [cursorY, minYear, zoom]);
 
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    setCursorY(e.clientY - rect.top);
+    if (!mainRef.current) return;
+    const rect = mainRef.current.getBoundingClientRect();
+    const scrollTop = mainRef.current.scrollTop;
+    setCursorY(e.clientY - rect.top + scrollTop);
   };
 
   const handleMouseLeave = () => {
     setCursorY(null);
   };
-
+  
   const totalHeight = (maxYear - minYear) * Y_AXIS_MULTIPLIER * zoom;
   
-  // This must come after the state and refs are declared
   if (timelines.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-8">
@@ -119,7 +119,7 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
     >
        {cursorY !== null && cursorYear !== null && mainRef.current && (
          <CursorIndicator
-            top={cursorY + mainRef.current.scrollTop}
+            top={cursorY - mainRef.current.scrollTop}
         />
       )}
       <div className="flex gap-8 h-full p-8">
