@@ -56,17 +56,6 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
     return [1990, 2030];
   }, [positionedTimelines]);
   
-  // This must come after the state and refs are declared
-  if (timelines.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-8">
-        <Frown className="h-24 w-24 mb-4" />
-        <h2 className="text-2xl font-headline">Nothing to see here... yet.</h2>
-        <p className="mt-2 max-w-md">Use the search bar above to add a timeline for a person, country, or historical event to begin your journey through time.</p>
-      </div>
-    );
-  }
-
   const yearMarkers = useMemo(() => {
     const pixelsPerYear = Y_AXIS_MULTIPLIER * zoom;
     if (pixelsPerYear <= 0) return [];
@@ -99,7 +88,6 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
 
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    // The main container has p-8, which is 2rem or 32px. We need to subtract this.
     const rect = e.currentTarget.getBoundingClientRect();
     const paddingTop = parseInt(window.getComputedStyle(e.currentTarget).paddingTop, 10);
     setCursorY(e.clientY - rect.top - paddingTop);
@@ -111,6 +99,17 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
 
   const totalHeight = (maxYear - minYear) * Y_AXIS_MULTIPLIER * zoom;
   
+  // This must come after the state and refs are declared
+  if (timelines.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-8">
+        <Frown className="h-24 w-24 mb-4" />
+        <h2 className="text-2xl font-headline">Nothing to see here... yet.</h2>
+        <p className="mt-2 max-w-md">Use the search bar above to add a timeline for a person, country, or historical event to begin your journey through time.</p>
+      </div>
+    );
+  }
+
   return (
     <div 
       className="relative w-full h-full"
