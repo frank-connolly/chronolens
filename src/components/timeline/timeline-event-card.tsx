@@ -18,13 +18,19 @@ export default function TimelineEventCard({ event, eventY, cardY, side }: Timeli
   const [isExpanded, setIsExpanded] = useState(false);
 
   // SVG Path calculation
-  const startX = side === 'left' ? '100%' : '0%';
-  const startY = cardY;
-  const endX = side === 'left' ? '50%' : '50%';
-  const endY = eventY;
+  // Start the line from the center of the card's attachment side
+  const cardStartX = side === 'left' ? '100%' : '0%';
+  const cardStartY = cardY; 
   
-  // Path from card to the event dot on timeline
-  const pathD = `M ${startX} ${startY} L ${endX} ${endY}`;
+  // The line bends towards the center timeline
+  const controlX = '50%';
+  
+  // The path ends at the event dot on the timeline
+  const eventDotX = '50%';
+  const eventDotY = eventY;
+
+  const pathD = `M ${cardStartX} ${cardStartY} C ${controlX} ${cardStartY}, ${controlX} ${eventDotY}, ${eventDotX} ${eventDotY}`;
+
 
   return (
     <div
@@ -34,19 +40,18 @@ export default function TimelineEventCard({ event, eventY, cardY, side }: Timeli
       )}
       style={{ top: 0, left: 0 }}
     >
-      {/* SVG Container needs to span the full column width and height */}
-      <svg className="absolute w-full h-full overflow-visible">
+      {/* SVG Container needs to span the full column width and height to draw the path */}
+      <svg className="absolute w-full h-full overflow-visible" style={{top: 0, left: 0}}>
           <path d={pathD} stroke="hsl(var(--border))" strokeWidth="1" fill="none" />
       </svg>
       
       {/* Event Dot on the timeline */}
       <div
-        className="absolute top-0 w-3 h-3 rounded-full bg-background border-2 border-accent"
+        className="absolute w-3 h-3 rounded-full bg-background border-2 border-accent"
         style={{
-          transform: `translateY(-50%)`,
           left: '50%',
-          marginLeft: '-6px', // Center the dot on the line
-          top: `${eventY}px`,
+          top: 0,
+          transform: `translate(-50%, ${eventY - 6}px)`, // Center the dot on the line
         }}
       />
       
@@ -57,7 +62,7 @@ export default function TimelineEventCard({ event, eventY, cardY, side }: Timeli
           side === 'left' ? 'left-0' : 'right-auto',
           side === 'right' ? 'left-[calc(50%+1rem)]' : 'left-auto'
         )}
-        style={{ top: `${cardY}px`, transform: `translateY(-50%)` }}
+        style={{ top: 0, transform: `translateY(${cardY - 37}px)` }} // 37 is half of default card height
       >
          <Card 
           className="shadow-md hover:shadow-xl transition-shadow duration-300 border-primary/20 cursor-pointer"
