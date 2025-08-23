@@ -32,43 +32,28 @@ export async function populateTimeline(input: PopulateTimelineInput): Promise<Po
   return populateTimelineFlow(input);
 }
 
-const extractTimelineData = ai.defineTool(
-  {
-    name: 'extractTimelineData',
-    description: 'Extracts significant dates and events from a Wikipedia page.',
-    inputSchema: z.object({
-      pageTitle: z.string().describe('The title of the Wikipedia page.'),
-    }),
-    outputSchema: z.array(
-      z.object({
-        date: z.string().describe('The date of the event.'),
-        event: z.string().describe('A description of the event.'),
-      })
-    ),
-  },
-  async (input) => {
-    // Placeholder implementation for extracting timeline data from Wikipedia.
-    // In a real application, this would involve fetching the Wikipedia page,
-    // parsing its content, and extracting the relevant dates and events.
-    // For now, we return a static list of events as an example.
-    console.log(`Extracting timeline for: ${input.pageTitle}`);
-    if (input.pageTitle.toLowerCase().includes('internet')) {
-       return [
-        { date: "1969", event: "ARPANET, the precursor to the internet, is established." },
-        { date: "1983", event: "The Domain Name System (DNS) is introduced." },
-        { date: "1990", event: "Tim Berners-Lee invents the World Wide Web." },
-        { date: "1993", event: "The Mosaic web browser is released." },
-        { date: "1998", event: "Google is founded." },
-      ];
-    }
-    return [
-      {date: '1903', event: 'Born in Rochester, New York.'},
-      {date: '1926', event: 'Earned a B.S. degree from MIT.'},
-      {date: '1930', event: 'Received Ph.D. from Caltech.'},
-      {date: '1939', event: 'Invented the WFC technology.'},
+async function extractTimelineData(pageTitle: string) {
+  // Placeholder implementation for extracting timeline data from Wikipedia.
+  // In a real application, this would involve fetching the Wikipedia page,
+  // parsing its content, and extracting the relevant dates and events.
+  // For now, we return a static list of events as an example.
+  console.log(`Extracting timeline for: ${pageTitle}`);
+  if (pageTitle.toLowerCase().includes('internet')) {
+     return [
+      { date: "1969", event: "ARPANET, the precursor to the internet, is established." },
+      { date: "1983", event: "The Domain Name System (DNS) is introduced." },
+      { date: "1990", event: "Tim Berners-Lee invents the World Wide Web." },
+      { date: "1993", event: "The Mosaic web browser is released." },
+      { date: "1998", event: "Google is founded." },
     ];
   }
-);
+  return [
+    {date: '1903', event: 'Born in Rochester, New York.'},
+    {date: '1926', event: 'Earned a B.S. degree from MIT.'},
+    {date: '1930', event: 'Received Ph.D. from Caltech.'},
+    {date: '1939', event: 'Invented the WFC technology.'},
+  ];
+}
 
 const populateTimelineFlow = ai.defineFlow(
   {
@@ -77,19 +62,7 @@ const populateTimelineFlow = ai.defineFlow(
     outputSchema: PopulateTimelineOutputSchema,
   },
   async (input) => {
-    const llmResponse = await ai.generate({
-      prompt: `Extract significant dates and events from the Wikipedia page titled "${input.wikipediaPageTitle}".`,
-      model: ai.model('googleai/gemini-2.0-flash'),
-      tools: [extractTimelineData],
-      toolChoice: 'tool',
-    });
-
-    const toolRequest = llmResponse.toolRequest();
-    if (!toolRequest || toolRequest.name !== 'extractTimelineData') {
-      return { events: [] };
-    }
-    
-    const toolOutput = await extractTimelineData(toolRequest.input);
-    return { events: toolOutput };
+    const events = await extractTimelineData(input.wikipediaPageTitle);
+    return { events };
   }
 );
