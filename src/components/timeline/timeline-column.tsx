@@ -22,9 +22,6 @@ interface TimelineColumnProps {
   onRemove: () => void;
 }
 
-const CARD_SPACING = 16; // 1rem
-const ESTIMATED_CARD_HEIGHT = 80; // Estimated height for an unexpanded card
-
 export default function TimelineColumn({
   timeline,
   minYear,
@@ -32,39 +29,10 @@ export default function TimelineColumn({
   yAxisMultiplier,
   onRemove,
 }: TimelineColumnProps) {
-  const lastPosition: { left: number; right: number } = {
-    left: -Infinity,
-    right: -Infinity,
-  };
 
   const sortedEvents = [...timeline.events]
     .filter(event => event.fractionalYear !== null)
     .sort((a, b) => (a.fractionalYear as number) - (b.fractionalYear as number));
-
-  const renderedElements: React.ReactNode[] = [];
-  
-  sortedEvents.forEach((event, index) => {
-    const year = event.fractionalYear as number;
-    const side = index % 2 === 0 ? 'left' : 'right';
-
-    const idealTop = (year - minYear) * yAxisMultiplier * zoom;
-
-    // Check for overlap and adjust position
-    const lastCardBottom = lastPosition[side];
-    let currentTop = Math.max(idealTop, lastCardBottom + CARD_SPACING);
-
-    lastPosition[side] = currentTop + ESTIMATED_CARD_HEIGHT;
-
-    renderedElements.push(
-      <TimelineEventCard
-        key={`${timeline.id}-${index}`}
-        event={event}
-        top={currentTop}
-        side={side}
-      />
-    );
-  });
-
 
   return (
     <div className="relative w-80 shrink-0 h-full">
@@ -90,7 +58,22 @@ export default function TimelineColumn({
       <div
         className="absolute top-0 left-1/2 -translate-x-1/2 h-full w-0.5 bg-border -z-10" />
 
-      <div className="relative h-full">{renderedElements}</div>
+      <div className="relative h-full">
+        {sortedEvents.map((event, index) => {
+          const year = event.fractionalYear as number;
+          const side = index % 2 === 0 ? 'left' : 'right';
+          const top = (year - minYear) * yAxisMultiplier * zoom;
+
+          return (
+            <TimelineEventCard
+              key={`${timeline.id}-${index}`}
+              event={event}
+              top={top}
+              side={side}
+            />
+          );
+        })}
+      </div>
     </div>
   );
 }
