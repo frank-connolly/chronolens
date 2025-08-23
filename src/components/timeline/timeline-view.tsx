@@ -24,39 +24,39 @@ const parseYear = (dateStr: string): number | null => {
   if (!dateStr) return null;
   const trimmedDate = dateStr.trim();
 
-  // 1. Handles "Month YYYY" format (e.g., "December 1948")
-  const monthYearMatch = trimmedDate.match(
-    /^(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})$/
-  );
-  if (monthYearMatch) {
-    const monthName = monthYearMatch[1];
-    const year = parseInt(monthYearMatch[2], 10);
-    const monthIndex = MONTHS.indexOf(monthName);
-    if (monthIndex !== -1) {
-      // Return fractional year. e.g., Jan is 0/12, Dec is 11/12
-      return year + monthIndex / 12;
-    }
-  }
-
-  // 2. Handles "YYYY" format
-  const yearOnlyMatch = trimmedDate.match(/^\d{4}$/);
-  if (yearOnlyMatch) {
-    return parseInt(yearOnlyMatch[0], 10);
-  }
-
-  // 3. Fallback to Date object for full dates (e.g., "YYYY-MM-DD")
+  // Try parsing full date first (YYYY-MM-DD, etc.)
   const date = new Date(trimmedDate);
   if (!isNaN(date.getTime())) {
-    // For full dates, calculate the fractional part of the year.
     const year = date.getFullYear();
-    const startOfYear = new Date(year, 0, 1);
-    const endOfYear = new Date(year + 1, 0, 1);
+    // Check if it's a valid date, as new Date('1968') becomes Jan 1 1968 UTC, but might be interpreted differently in browser's timezone.
+    // A simple regex can help distinguish between 'YYYY' and a fuller date.
+    if (trimmedDate.match(/^\d{4}$/)) {
+        return parseInt(trimmedDate, 10);
+    }
+    
+    // For full dates, calculate the fractional part of the year.
+    const startOfYear = new Date(Date.UTC(year, 0, 1));
+    const endOfYear = new Date(Date.UTC(year + 1, 0, 1));
     const totalTimeInYear = endOfYear.getTime() - startOfYear.getTime();
     const timeFromStart = date.getTime() - startOfYear.getTime();
     return year + (timeFromStart / totalTimeInYear);
   }
+
+  // Handles "Month YYYY" format (e.g., "December 1948")
+  const monthYearMatch = trimmedDate.match(
+    new RegExp(`^(${MONTHS.join('|')})\\s+(\\d{4})$`, 'i')
+  );
+  if (monthYearMatch) {
+    const monthName = monthYearMatch[1];
+    const year = parseInt(monthYearMatch[2], 10);
+    const monthIndex = MONTHS.findIndex(m => m.toLowerCase() === monthName.toLowerCase());
+    if (monthIndex !== -1) {
+      // Return fractional year. e.g., Jan is 0/12, Dec is 11/12
+      return year + (monthIndex / 12);
+    }
+  }
   
-  // 4. Final fallback for formats like "c. 1950" or other unparseable strings.
+  // Final fallback for formats like "c. 1950" or other unparseable strings.
   const fallbackYearMatch = trimmedDate.match(/\b(\d{4})\b/);
   return fallbackYearMatch ? parseInt(fallbackYearMatch[0], 10) : null;
 };
