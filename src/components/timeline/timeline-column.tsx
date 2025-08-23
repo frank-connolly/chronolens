@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { TimelineEvent } from '@/types';
@@ -31,7 +32,7 @@ export default function TimelineColumn({
 
   return (
     <div className="relative w-80 shrink-0 h-full">
-      <div 
+       <div 
         className="sticky top-0 z-20 py-4 bg-background/80 backdrop-blur-sm -mt-8 pt-8"
       >
         <div className="relative text-accent-foreground bg-accent p-2 rounded-lg shadow">
@@ -49,22 +50,22 @@ export default function TimelineColumn({
         </div>
       </div>
 
-      {/* Vertical Line */}
-      <div
-        className="absolute top-0 left-1/2 -translate-x-1/2 h-full w-0.5 bg-border -z-10" />
-
+      {/* This container establishes the positioning context for the line and cards */}
       <div className="relative h-full">
-        {timeline.events.filter(e => e.fractionalYear !== null).sort((a,b) => (a.fractionalYear as number) - (b.fractionalYear as number)).map((event, index) => {
+        {/* Vertical Line */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 h-full w-0.5 bg-border -z-10" />
+        
+        {/* Event Cards */}
+        {timeline.events.map((event, index) => {
           if (event.fractionalYear === null) return null;
 
           const year = event.fractionalYear;
           const side = index % 2 === 0 ? 'left' : 'right';
-          // This calculation places the card's top based purely on its date.
           const top = (year - minYear) * yAxisMultiplier * zoom;
 
           return (
             <TimelineEventCard
-              key={`${timeline.id}-${index}`}
+              key={`${timeline.id}-${event.date}-${index}`}
               event={event}
               top={top}
               side={side}
