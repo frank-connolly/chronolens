@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { Timeline } from '@/types';
 import TimelineColumn from './timeline-column';
 import YearScale from './year-scale';
+import CursorIndicator from './cursor-indicator';
 import { Frown } from 'lucide-react';
 
 interface TimelineViewProps {
@@ -82,6 +83,17 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
     return [1900, 2025];
   }, [timelines]);
 
+  const [cursorY, setCursorY] = useState<number | null>(null);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setCursorY(e.clientY - rect.top);
+  };
+
+  const handleMouseLeave = () => {
+    setCursorY(null);
+  };
+
   if (timelines.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-8">
@@ -93,9 +105,16 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
   }
 
   const totalHeight = (maxYear - minYear) * Y_AXIS_MULTIPLIER * zoom;
+  const pixelsPerYear = Y_AXIS_MULTIPLIER * zoom;
+  const cursorYear = cursorY !== null ? minYear + cursorY / pixelsPerYear : null;
+
 
   return (
-    <div className="relative w-full h-full p-8">
+    <div 
+      className="relative w-full h-full p-8"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+    >
       <div className="flex gap-8 h-full">
         <YearScale
           minYear={minYear}
@@ -120,6 +139,12 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
           ))}
         </div>
       </div>
+      {cursorY !== null && cursorYear !== null && (
+         <CursorIndicator
+            top={cursorY}
+            year={cursorYear}
+        />
+      )}
     </div>
   );
 }

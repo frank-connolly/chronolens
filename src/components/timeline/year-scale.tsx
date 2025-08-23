@@ -48,7 +48,11 @@ function getMarkerLabel(fractionalYear: number, type: 'year' | 'month' | 'day'):
   
   if (type === 'month') {
     const monthIndex = Math.floor(remainder * 12);
-    return `${MONTH_NAMES[monthIndex] || ''} ${year}`;
+    // When zoomed out, month markers can fall on the same year. Only show year for first month.
+    if (Math.abs(remainder) < 0.01) {
+      return year.toString();
+    }
+    return `${MONTH_NAMES[monthIndex] || ''}`;
   }
   
   if (type === 'day') {
@@ -56,6 +60,10 @@ function getMarkerLabel(fractionalYear: number, type: 'year' | 'month' | 'day'):
     const date = new Date(year, 0); // Start of the year
     date.setDate(dayOfYear + 1); // Add days
     const monthName = MONTH_NAMES[date.getMonth()];
+    // When zoomed out, day markers can fall on the same month. Only show month for first day.
+     if (date.getDate() === 1) {
+       return `${monthName} ${year}`;
+    }
     return `${monthName} ${date.getDate()}`;
   }
   
@@ -68,7 +76,7 @@ export default function YearScale({ minYear, maxYear, zoom, yAxisMultiplier }: Y
     const idealInterval = MIN_PX_PER_INTERVAL / pixelsPerYear;
     
     // Find the best interval from our predefined list
-    const bestInterval = INTERVALS.find(i => i.value <= idealInterval) || INTERVALS[INTERVALS.length - 1];
+    const bestInterval = INTERVALS.find(i => i.value > idealInterval) || INTERVALS[INTERVALS.length - 1];
     
     const yearMarkers: { value: number; label: string }[] = [];
     const { value: interval, type } = bestInterval;
@@ -93,7 +101,7 @@ export default function YearScale({ minYear, maxYear, zoom, yAxisMultiplier }: Y
         return (
           <div
             key={value}
-            className="absolute right-4 text-sm text-muted-foreground font-code"
+            className="absolute right-4 text-sm text-muted-foreground font-code -translate-y-1/2"
             style={{ top: `${top}px` }}
           >
             <span className="bg-background px-1">{label}</span>
