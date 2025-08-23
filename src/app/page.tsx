@@ -95,9 +95,18 @@ export default function ChronoLensPage() {
     localStorage.removeItem(TIMELINES_STORAGE_KEY);
   }
 
-  const handleZoomIn = () => setZoom(z => Math.min(z * 1.5, 400));
-  const handleZoomOut = () => setZoom(z => Math.max(z / 1.5, 0.05));
+  const handleZoomIn = () => setZoom(z => Math.min(z * 1.5, 4));
+  const handleZoomOut = () => setZoom(z => Math.max(z / 1.5, 0.25));
   const handleZoomReset = () => setZoom(DEFAULT_ZOOM);
+  
+  const reorderTimelines = (sourceIndex: number, destinationIndex: number) => {
+    setTimelines(prev => {
+      const newTimelines = [...prev];
+      const [removed] = newTimelines.splice(sourceIndex, 1);
+      newTimelines.splice(destinationIndex, 0, removed);
+      return newTimelines;
+    });
+  };
 
   return (
     <div className="flex flex-col h-screen bg-background text-foreground">
@@ -113,8 +122,8 @@ export default function ChronoLensPage() {
             onZoomIn={handleZoomIn}
             onZoomOut={handleZoomOut}
             onZoomReset={handleZoomReset}
-            canZoomIn={zoom < 400}
-            canZoomOut={zoom > 0.05}
+            canZoomIn={zoom < 4}
+            canZoomOut={zoom > 0.25}
           />
           {timelines.length > 0 && <Button variant="outline" onClick={handleClear}>Clear All</Button>}
         </div>
@@ -125,7 +134,12 @@ export default function ChronoLensPage() {
             <Loader2 className="h-16 w-16 animate-spin text-primary" />
           </div>
         ) : (
-          <TimelineView timelines={timelines} zoom={zoom} onRemoveTimeline={removeTimeline} />
+          <TimelineView 
+            timelines={timelines} 
+            zoom={zoom} 
+            onRemoveTimeline={removeTimeline} 
+            onReorderTimelines={reorderTimelines}
+          />
         )}
       </main>
     </div>
