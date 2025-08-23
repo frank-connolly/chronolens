@@ -43,11 +43,12 @@ export function parseDateToFractionalYear(dateStr: string): number | null {
     const year = parseInt(ymdMatch[1], 10);
     const month = parseInt(ymdMatch[2], 10);
     const day = parseInt(ymdMatch[3], 10);
-
-    const startOfYear = Date.UTC(year, 0, 1);
-    const targetDate = Date.UTC(year, month - 1, day);
-    const dayOfYear = (targetDate - startOfYear) / (1000 * 60 * 60 * 24);
     
+    // Day of year calculation
+    const startOfYear = Date.UTC(year, 0, 1); // Jan 1
+    const targetDate = Date.UTC(year, month - 1, day);
+    const dayOfYear = (targetDate - startOfYear) / (1000 * 60 * 60 * 24); // 0-indexed day of year
+
     return year + dayOfYear / getDaysInYear(year);
   }
 

@@ -3,6 +3,15 @@
 
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
+function isLeapYear(year: number): boolean {
+  return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+}
+
+function getDaysInYear(year: number): number {
+  return isLeapYear(year) ? 366 : 365;
+}
+
+
 export function getMarkerLabel(fractionalYear: number, type: 'year' | 'month' | 'day'): string {
   const year = Math.floor(fractionalYear);
   const remainder = fractionalYear - year;
@@ -11,9 +20,8 @@ export function getMarkerLabel(fractionalYear: number, type: 'year' | 'month' | 
     return year.toString();
   }
   
-  // Use a fixed 365.25 days for calculation simplicity across years
-  const daysInYear = 365.25;
-  const dayOfYear = Math.floor(remainder * daysInYear);
+  const daysInYear = getDaysInYear(year);
+  const dayOfYear = Math.round(remainder * daysInYear);
 
   // Create a date object in UTC to avoid timezone issues.
   // Start with Jan 1st of the year and add the number of days.
