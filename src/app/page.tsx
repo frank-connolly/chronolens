@@ -95,9 +95,31 @@ export default function ChronoLensPage() {
     localStorage.removeItem(TIMELINES_STORAGE_KEY);
   }
 
-  const handleZoomIn = () => setZoom(z => Math.min(z * 1.5, 4));
-  const handleZoomOut = () => setZoom(z => Math.max(z / 1.5, 0.25));
-  const handleZoomReset = () => setZoom(DEFAULT_ZOOM);
+  const adjustScrollForZoom = (newZoom: number, oldZoom: number) => {
+    const mainContainer = mainContainerRef.current;
+    if (!mainContainer) return;
+
+    const { scrollTop, clientHeight } = mainContainer;
+    const scrollCenter = scrollTop + clientHeight / 2;
+    const newScrollTop = (scrollCenter * newZoom / oldZoom) - (clientHeight / 2);
+    
+    mainContainer.scrollTop = newScrollTop;
+  }
+
+  const handleZoomIn = () => {
+    const newZoom = Math.min(zoom * 1.5, 4);
+    adjustScrollForZoom(newZoom, zoom);
+    setZoom(newZoom);
+  };
+  const handleZoomOut = () => {
+    const newZoom = Math.max(zoom / 1.5, 0.25);
+    adjustScrollForZoom(newZoom, zoom);
+    setZoom(newZoom);
+  };
+  const handleZoomReset = () => {
+    adjustScrollForZoom(DEFAULT_ZOOM, zoom);
+    setZoom(DEFAULT_ZOOM);
+  }
   
   return (
     <div className="flex flex-col h-screen bg-background text-foreground">
