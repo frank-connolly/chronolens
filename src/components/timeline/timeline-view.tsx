@@ -24,9 +24,8 @@ type PositionedTimelineEvent = TimelineEvent & { fractionalYear: number | null }
 type PositionedTimeline = Omit<Timeline, 'events'> & { events: PositionedTimelineEvent[] };
 
 export default function TimelineView({ timelines, zoom, onRemoveTimeline }: TimelineViewProps) {
-  const mainRef = useRef<HTMLDivElement>(null);
   const [cursorY, setCursorY] = useState<number | null>(null);
-
+  
   // Memoize the positioned timelines to avoid recalculating on every render
   const positionedTimelines: PositionedTimeline[] = useMemo(() => {
     return timelines.map(timeline => ({
@@ -80,6 +79,8 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
     return markers;
   }, [minYear, maxYear, zoom]);
 
+  const mainRef = useRef<HTMLDivElement>(null);
+  
   const cursorYear = useMemo(() => {
     if (cursorY === null || !mainRef.current) return null;
     const scrollTop = mainRef.current.scrollTop;
@@ -89,8 +90,7 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    const paddingTop = parseInt(window.getComputedStyle(e.currentTarget).paddingTop, 10);
-    setCursorY(e.clientY - rect.top - paddingTop);
+    setCursorY(e.clientY - rect.top);
   };
 
   const handleMouseLeave = () => {
