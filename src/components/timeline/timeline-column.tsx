@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { TimelineEvent } from '@/types';
@@ -33,7 +32,7 @@ export default function TimelineColumn({
   return (
     <div className="relative w-80 shrink-0 h-full">
       <div 
-        className="sticky top-0 z-10 py-4 bg-background/80 backdrop-blur-sm -mt-8 pt-8"
+        className="sticky top-0 z-20 py-4 bg-background/80 backdrop-blur-sm -mt-8 pt-8"
       >
         <div className="relative text-accent-foreground bg-accent p-2 rounded-lg shadow">
            <h2 className="text-xl font-headline font-bold text-center">
