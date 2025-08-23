@@ -1,4 +1,3 @@
-// src/ai/flows/populate-timeline.ts
 'use server';
 /**
  * @fileOverview A flow that populates a timeline with significant dates and events extracted from a Wikipedia page.
@@ -22,7 +21,8 @@ const PopulateTimelineOutputSchema = z.object({
   events: z.array(
     z.object({
       date: z.string().describe('The date of the event.'),
-      event: z.string().describe('A description of the event.'),
+      title: z.string().describe('A short, concise title for the event (5-7 words max).'),
+      event: z.string().describe('A one-sentence description of the event.'),
     })
   ).describe('An array of significant events extracted from the Wikipedia page.'),
 });
@@ -36,7 +36,7 @@ const prompt = ai.definePrompt({
   name: 'populateTimelinePrompt',
   input: { schema: PopulateTimelineInputSchema },
   output: { schema: PopulateTimelineOutputSchema },
-  prompt: `Generate a timeline of significant events for the topic: {{{wikipediaPageTitle}}}. Focus on key dates and concise descriptions.`,
+  prompt: `Generate a timeline of significant events for the topic: {{{wikipediaPageTitle}}}. For each event, provide the date, a short title (5-7 words), and a one-sentence description.`,
 });
 
 const populateTimelineFlow = ai.defineFlow(

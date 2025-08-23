@@ -1,5 +1,6 @@
 export interface TimelineEvent {
   date: string;
+  title: string;
   event: string;
 }
 

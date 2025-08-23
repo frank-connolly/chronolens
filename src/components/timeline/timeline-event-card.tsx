@@ -1,8 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import type { TimelineEvent } from '@/types';
 import { cn } from '@/lib/utils';
+import { ChevronDown } from 'lucide-react';
 
 interface TimelineEventCardProps {
   event: TimelineEvent;
@@ -11,19 +13,36 @@ interface TimelineEventCardProps {
 }
 
 export default function TimelineEventCard({ event, top, side }: TimelineEventCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
   return (
     <div
       className={cn(
-        'absolute w-[calc(50%-1rem)]',
+        'absolute w-[calc(50%-1rem)] transition-all duration-300',
         side === 'left' ? 'left-0' : 'right-0'
       )}
       style={{ top: `${top}px` }}
     >
       <div className="relative">
-        <Card className="shadow-md hover:shadow-xl transition-shadow duration-300 border-primary/20">
+        <Card 
+          className="shadow-md hover:shadow-xl transition-shadow duration-300 border-primary/20 cursor-pointer"
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
           <CardHeader className="p-3">
-            <CardTitle className="text-base font-bold font-headline text-primary">{event.date}</CardTitle>
-            <CardDescription className="text-sm text-foreground/80">{event.event}</CardDescription>
+            <div className="flex justify-between items-start">
+              <div className='flex-1'>
+                <p className="text-xs text-muted-foreground">{event.date}</p>
+                <CardTitle className="text-sm font-bold font-headline text-primary leading-tight">
+                  {event.title}
+                </CardTitle>
+              </div>
+              <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", isExpanded && "rotate-180")} />
+            </div>
+            {isExpanded && (
+              <CardDescription className="text-sm text-foreground/80 pt-2">
+                {event.event}
+              </CardDescription>
+            )}
           </CardHeader>
         </Card>
         {/* Connector line and dot */}
