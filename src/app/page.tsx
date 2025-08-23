@@ -99,15 +99,6 @@ export default function ChronoLensPage() {
   const handleZoomOut = () => setZoom(z => Math.max(z / 1.5, 0.25));
   const handleZoomReset = () => setZoom(DEFAULT_ZOOM);
   
-  const reorderTimelines = (sourceIndex: number, destinationIndex: number) => {
-    setTimelines(prev => {
-      const newTimelines = [...prev];
-      const [removed] = newTimelines.splice(sourceIndex, 1);
-      newTimelines.splice(destinationIndex, 0, removed);
-      return newTimelines;
-    });
-  };
-
   return (
     <div className="flex flex-col h-screen bg-background text-foreground">
       <header className="flex items-center justify-between p-4 border-b border-border/50 shadow-sm z-10 bg-background/80 backdrop-blur-sm">
@@ -138,7 +129,6 @@ export default function ChronoLensPage() {
             timelines={timelines} 
             zoom={zoom} 
             onRemoveTimeline={removeTimeline} 
-            onReorderTimelines={reorderTimelines}
           />
         )}
       </main>

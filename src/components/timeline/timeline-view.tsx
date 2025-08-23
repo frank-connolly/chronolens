@@ -11,7 +11,6 @@ interface TimelineViewProps {
   timelines: Timeline[];
   zoom: number;
   onRemoveTimeline: (id: string) => void;
-  onReorderTimelines: (sourceIndex: number, destinationIndex: number) => void;
 }
 
 const Y_AXIS_MULTIPLIER = 100; // pixels per year at zoom level 1
@@ -38,7 +37,7 @@ const parseYear = (dateStr: string): number | null => {
 };
 
 
-export default function TimelineView({ timelines, zoom, onRemoveTimeline, onReorderTimelines }: TimelineViewProps) {
+export default function TimelineView({ timelines, zoom, onRemoveTimeline }: TimelineViewProps) {
   const [minYear, maxYear] = useMemo(() => {
     let min: number | null = null;
     let max: number | null = null;
@@ -59,7 +58,6 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline, onReor
   }, [timelines]);
 
   const [cursorY, setCursorY] = useState<number | null>(null);
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -69,22 +67,6 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline, onReor
   const handleMouseLeave = () => {
     setCursorY(null);
   };
-  
-  const handleDragStart = (index: number) => {
-    setDraggedIndex(index);
-  };
-
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, index: number) => {
-    e.preventDefault();
-    if (draggedIndex === null || draggedIndex === index) return;
-    onReorderTimelines(draggedIndex, index);
-    setDraggedIndex(index);
-  };
-
-  const handleDragEnd = () => {
-    setDraggedIndex(null);
-  };
-
 
   if (timelines.length === 0) {
     return (
@@ -124,23 +106,16 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline, onReor
           className="flex-1 flex gap-8 h-full"
           style={{ height: `${totalHeight}px` }}
         >
-          {timelines.map((timeline, index) => (
-            <div
+          {timelines.map((timeline) => (
+            <TimelineColumn
               key={timeline.id}
-              onDragOver={(e) => handleDragOver(e, index)}
-              onDragEnd={handleDragEnd}
-              className={draggedIndex === index ? 'opacity-50' : ''}
-            >
-              <TimelineColumn
-                timeline={timeline}
-                minYear={minYear}
-                zoom={zoom}
-                yAxisMultiplier={Y_AXIS_MULTIPLIER}
-                parseYear={parseYear}
-                onRemove={() => onRemoveTimeline(timeline.id)}
-                onDragStart={() => handleDragStart(index)}
-              />
-            </div>
+              timeline={timeline}
+              minYear={minYear}
+              zoom={zoom}
+              yAxisMultiplier={Y_AXIS_MULTIPLIER}
+              parseYear={parseYear}
+              onRemove={() => onRemoveTimeline(timeline.id)}
+            />
           ))}
         </div>
       </div>

@@ -3,7 +3,7 @@
 import type { Timeline } from '@/types';
 import TimelineEventCard from './timeline-event-card';
 import { Button } from '../ui/button';
-import { GripVertical, X } from 'lucide-react';
+import { X } from 'lucide-react';
 
 interface TimelineColumnProps {
   timeline: Timeline;
@@ -12,7 +12,6 @@ interface TimelineColumnProps {
   yAxisMultiplier: number;
   parseYear: (dateStr: string) => number | null;
   onRemove: () => void;
-  onDragStart: () => void;
 }
 
 const CARD_SPACING = 16; // 1rem
@@ -25,7 +24,6 @@ export default function TimelineColumn({
   yAxisMultiplier,
   parseYear,
   onRemove,
-  onDragStart,
 }: TimelineColumnProps) {
   const lastPosition: { left: number; right: number } = {
     left: -Infinity,
@@ -66,12 +64,9 @@ export default function TimelineColumn({
     <div className="relative w-80 shrink-0 h-full">
       <div 
         className="sticky top-0 z-10 py-4 bg-background/80 backdrop-blur-sm -mt-8 pt-8"
-        draggable
-        onDragStart={onDragStart}
       >
-        <div className="relative text-accent-foreground bg-accent p-2 rounded-lg shadow cursor-grab active:cursor-grabbing">
-           <GripVertical className="absolute left-1 top-1/2 -translate-y-1/2 h-6 w-6 text-accent-foreground/50" />
-           <h2 className="text-xl font-headline font-bold text-center px-8">
+        <div className="relative text-accent-foreground bg-accent p-2 rounded-lg shadow">
+           <h2 className="text-xl font-headline font-bold text-center">
             {timeline.title}
           </h2>
           <Button 
