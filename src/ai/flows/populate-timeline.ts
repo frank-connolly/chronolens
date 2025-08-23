@@ -32,28 +32,12 @@ export async function populateTimeline(input: PopulateTimelineInput): Promise<Po
   return populateTimelineFlow(input);
 }
 
-async function extractTimelineData(pageTitle: string) {
-  // Placeholder implementation for extracting timeline data from Wikipedia.
-  // In a real application, this would involve fetching the Wikipedia page,
-  // parsing its content, and extracting the relevant dates and events.
-  // For now, we return a static list of events as an example.
-  console.log(`Extracting timeline for: ${pageTitle}`);
-  if (pageTitle.toLowerCase().includes('internet')) {
-     return [
-      { date: "1969", event: "ARPANET, the precursor to the internet, is established." },
-      { date: "1983", event: "The Domain Name System (DNS) is introduced." },
-      { date: "1990", event: "Tim Berners-Lee invents the World Wide Web." },
-      { date: "1993", event: "The Mosaic web browser is released." },
-      { date: "1998", event: "Google is founded." },
-    ];
-  }
-  return [
-    {date: '1903', event: 'Born in Rochester, New York.'},
-    {date: '1926', event: 'Earned a B.S. degree from MIT.'},
-    {date: '1930', event: 'Received Ph.D. from Caltech.'},
-    {date: '1939', event: 'Invented the WFC technology.'},
-  ];
-}
+const prompt = ai.definePrompt({
+  name: 'populateTimelinePrompt',
+  input: { schema: PopulateTimelineInputSchema },
+  output: { schema: PopulateTimelineOutputSchema },
+  prompt: `Generate a timeline of significant events for the topic: {{{wikipediaPageTitle}}}. Focus on key dates and concise descriptions.`,
+});
 
 const populateTimelineFlow = ai.defineFlow(
   {
@@ -62,7 +46,10 @@ const populateTimelineFlow = ai.defineFlow(
     outputSchema: PopulateTimelineOutputSchema,
   },
   async (input) => {
-    const events = await extractTimelineData(input.wikipediaPageTitle);
-    return { events };
+    const { output } = await prompt(input);
+    if (!output) {
+      throw new Error('Failed to generate timeline from AI prompt.');
+    }
+    return output;
   }
 );
