@@ -60,8 +60,11 @@ export default function TimelineColumn({
 
       <div className="relative h-full">
         {sortedEvents.map((event, index) => {
-          const year = event.fractionalYear as number;
+          if (event.fractionalYear === null) return null;
+
+          const year = event.fractionalYear;
           const side = index % 2 === 0 ? 'left' : 'right';
+          // This calculation places the card's top based purely on its date.
           const top = (year - minYear) * yAxisMultiplier * zoom;
 
           return (
