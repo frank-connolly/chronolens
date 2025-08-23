@@ -98,6 +98,7 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
           maxYear={maxYear}
           zoom={zoom}
           yAxisMultiplier={Y_AXIS_MULTIPLIER}
+          cursorYear={cursorYear}
         />
         <div 
           className="flex-1 flex gap-8 h-full"
@@ -119,7 +120,6 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
       {cursorY !== null && cursorYear !== null && (
          <CursorIndicator
             top={cursorY}
-            year={cursorYear}
         />
       )}
     </div>
