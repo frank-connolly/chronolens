@@ -70,14 +70,6 @@ const extractTimelineData = ai.defineTool(
   }
 );
 
-const populateTimelinePrompt = ai.definePrompt({
-  name: 'populateTimelinePrompt',
-  tools: [extractTimelineData],
-  input: {schema: PopulateTimelineInputSchema},
-  output: {schema: PopulateTimelineOutputSchema},
-  prompt: `Extract significant dates and events from the Wikipedia page titled "{{{wikipediaPageTitle}}}".\n\nUse the extractTimelineData tool to get the dates and events. Return the results in JSON format.`,}
-);
-
 const populateTimelineFlow = ai.defineFlow(
   {
     name: 'populateTimelineFlow',
@@ -93,23 +85,11 @@ const populateTimelineFlow = ai.defineFlow(
     });
 
     const toolRequest = llmResponse.toolRequest();
-    if (toolRequest?.name === 'extractTimelineData') {
-      const toolOutput = await extractTimelineData(toolRequest.input);
-      return { events: toolOutput };
+    if (!toolRequest || toolRequest.name !== 'extractTimelineData') {
+      return { events: [] };
     }
     
-    // Fallback or error handling if the tool wasn't called as expected
-    const textOutput = llmResponse.text();
-    try {
-      // Sometimes the model might return JSON directly in the text.
-      const parsed = JSON.parse(textOutput);
-      if (parsed.events) {
-        return parsed;
-      }
-    } catch (e) {
-      // Ignore parsing errors, it wasn't JSON
-    }
-
-    return { events: [] };
+    const toolOutput = await extractTimelineData(toolRequest.input);
+    return { events: toolOutput };
   }
 );
