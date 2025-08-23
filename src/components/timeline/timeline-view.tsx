@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -21,44 +22,47 @@ const MIN_PX_BETWEEN_MARKERS = 60;
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 const parseYear = (dateStr: string): number | null => {
-  if (!dateStr) return null;
-  const trimmedDate = dateStr.trim();
-
-  // Try parsing full date first (YYYY-MM-DD, etc.)
-  const date = new Date(trimmedDate);
-  if (!isNaN(date.getTime())) {
-    const year = date.getFullYear();
-    // Check if it's a valid date, as new Date('1968') becomes Jan 1 1968 UTC, but might be interpreted differently in browser's timezone.
-    // A simple regex can help distinguish between 'YYYY' and a fuller date.
-    if (trimmedDate.match(/^\d{4}$/)) {
+    if (!dateStr) return null;
+    const trimmedDate = dateStr.trim();
+  
+    // Handles "Month YYYY" format (e.g., "December 1948")
+    const monthYearMatch = trimmedDate.match(
+      new RegExp(`^(${MONTHS.join('|')})\\s+(\\d{4})$`, 'i')
+    );
+    if (monthYearMatch) {
+      const monthName = monthYearMatch[1];
+      const year = parseInt(monthYearMatch[2], 10);
+      const monthIndex = MONTHS.findIndex(m => m.toLowerCase() === monthName.toLowerCase());
+      if (monthIndex !== -1) {
+        // Mid-month approximation
+        return year + (monthIndex / 12);
+      }
+    }
+  
+    // Try parsing with Date.UTC for full dates or YYYY
+    // Using UTC is crucial to avoid timezone issues.
+    const date = new Date(trimmedDate);
+     // Check if the date is just a year
+    if (/^\d{4}$/.test(trimmedDate)) {
         return parseInt(trimmedDate, 10);
     }
-    
-    // For full dates, calculate the fractional part of the year.
-    const startOfYear = new Date(Date.UTC(year, 0, 1));
-    const endOfYear = new Date(Date.UTC(year + 1, 0, 1));
-    const totalTimeInYear = endOfYear.getTime() - startOfYear.getTime();
-    const timeFromStart = date.getTime() - startOfYear.getTime();
-    return year + (timeFromStart / totalTimeInYear);
-  }
 
-  // Handles "Month YYYY" format (e.g., "December 1948")
-  const monthYearMatch = trimmedDate.match(
-    new RegExp(`^(${MONTHS.join('|')})\\s+(\\d{4})$`, 'i')
-  );
-  if (monthYearMatch) {
-    const monthName = monthYearMatch[1];
-    const year = parseInt(monthYearMatch[2], 10);
-    const monthIndex = MONTHS.findIndex(m => m.toLowerCase() === monthName.toLowerCase());
-    if (monthIndex !== -1) {
-      // Return fractional year. e.g., Jan is 0/12, Dec is 11/12
-      return year + (monthIndex / 12);
+    if (!isNaN(date.getTime())) {
+      const year = date.getUTCFullYear();
+      const startOfYear = Date.UTC(year, 0, 1);
+      const endOfYear = Date.UTC(year + 1, 0, 1);
+      const totalTimeInYear = endOfYear - startOfYear;
+      const timeFromStart = date.getTime() - startOfYear;
+      
+      if (totalTimeInYear > 0) {
+        return year + (timeFromStart / totalTimeInYear);
+      }
+      return year;
     }
-  }
-  
-  // Final fallback for formats like "c. 1950" or other unparseable strings.
-  const fallbackYearMatch = trimmedDate.match(/\b(\d{4})\b/);
-  return fallbackYearMatch ? parseInt(fallbackYearMatch[0], 10) : null;
+    
+    // Final fallback for formats like "c. 1950" or other unparseable strings.
+    const fallbackYearMatch = trimmedDate.match(/\b(\d{4})\b/);
+    return fallbackYearMatch ? parseInt(fallbackYearMatch[0], 10) : null;
 };
 
 
@@ -121,11 +125,10 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const scrollTop = e.currentTarget.scrollTop;
-    // Get padding-top of the element
     const style = window.getComputedStyle(e.currentTarget);
     const paddingTop = parseFloat(style.paddingTop);
     setCursorY(e.clientY - rect.top + scrollTop - paddingTop);
-};
+  };
 
   const handleMouseLeave = () => {
     setCursorY(null);
