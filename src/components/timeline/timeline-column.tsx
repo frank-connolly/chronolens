@@ -32,6 +32,7 @@ export default function TimelineColumn({
 
   return (
     <div className="relative w-80 shrink-0 h-full">
+      {/* Sticky Header for the title */}
        <div 
         className="sticky top-0 z-20 py-4 bg-background/80 backdrop-blur-sm -mt-8 pt-8"
       >
@@ -53,25 +54,27 @@ export default function TimelineColumn({
       {/* This container establishes the positioning context for the line and cards */}
       <div className="relative h-full">
         {/* Vertical Line */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 h-full w-0.5 bg-border -z-10" />
+        <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-0.5 bg-border" />
         
-        {/* Event Cards */}
-        {timeline.events.map((event, index) => {
-          if (event.fractionalYear === null) return null;
+        {/* Event Cards Container */}
+        <div className="relative">
+          {timeline.events.map((event, index) => {
+            if (event.fractionalYear === null) return null;
 
-          const year = event.fractionalYear;
-          const side = index % 2 === 0 ? 'left' : 'right';
-          const top = (year - minYear) * yAxisMultiplier * zoom;
+            const year = event.fractionalYear;
+            const side = index % 2 === 0 ? 'left' : 'right';
+            const top = (year - minYear) * yAxisMultiplier * zoom;
 
-          return (
-            <TimelineEventCard
-              key={`${timeline.id}-${event.date}-${index}`}
-              event={event}
-              top={top}
-              side={side}
-            />
-          );
-        })}
+            return (
+              <TimelineEventCard
+                key={`${timeline.id}-${event.date}-${index}`}
+                event={event}
+                top={top}
+                side={side}
+              />
+            );
+          })}
+        </div>
       </div>
     </div>
   );
