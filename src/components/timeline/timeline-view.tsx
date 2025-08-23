@@ -21,28 +21,30 @@ const MIN_PX_BETWEEN_MARKERS = 60;
 const parseYear = (dateStr: string): number | null => {
   if (!dateStr) return null;
   
-  // Try to match formats like "YYYY", "Month YYYY", "Month Day, YYYY"
+  // Attempt to parse the date string
   const date = new Date(dateStr);
+
+  // Check if the date is valid. `new Date('YYYY')` can sometimes be off by a day due to timezone.
+  // We want to handle "YYYY" as a special case.
+  const yearMatch = dateStr.trim().match(/^(\d{4})$/);
+  if (yearMatch) {
+    return parseInt(yearMatch[1], 10);
+  }
+
   if (!isNaN(date.getTime())) {
     const year = date.getFullYear();
-
-    // If the date string is just a year, treat it as the start of that year.
-    if (/^\d{4}$/.test(dateStr.trim())) {
-      return year;
-    }
-
     const startOfYear = new Date(year, 0, 1);
     const timeDiff = date.getTime() - startOfYear.getTime();
-    // Check if it's a leap year
     const isLeap = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
     const daysInYear = isLeap ? 366 : 365;
     const dayOfYear = timeDiff / (1000 * 60 * 60 * 24);
+    
     return year + dayOfYear / daysInYear;
   }
   
-  // Fallback for just a year
-  const yearMatch = dateStr.match(/\b(\d{4})\b/);
-  return yearMatch ? parseInt(yearMatch[0], 10) : null;
+  // Fallback for cases like "c. 1950" or other unparseable formats
+  const fallbackYearMatch = dateStr.match(/\b(\d{4})\b/);
+  return fallbackYearMatch ? parseInt(fallbackYearMatch[0], 10) : null;
 };
 
 
@@ -152,13 +154,13 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
           style={{ height: `${totalHeight}px` }}
         >
            {/* Background Year Lines */}
-          <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+          <div className="absolute top-0 left-0 w-full h-full pointer-events-none -z-20">
             {yearMarkers.map((year) => {
               const top = (year - minYear) * Y_AXIS_MULTIPLIER * zoom;
               return (
                 <div
                   key={`line-${year}`}
-                  className="absolute w-full h-px bg-border/50 -z-20"
+                  className="absolute w-full h-px bg-border/50"
                   style={{ top: `${top}px` }}
                 />
               );
