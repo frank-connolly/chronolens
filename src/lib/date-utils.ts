@@ -1,3 +1,4 @@
+
 'use client';
 
 // Array of month names for parsing dates
@@ -25,53 +26,64 @@ function getDaysInYear(year: number): number {
 }
 
 /**
- * Parses a date string into a fractional year value.
- * This is the core logic for positioning items on the timeline.
- * It uses UTC to avoid timezone-related issues.
+ * Parses a date string into a fractional year value using UTC calculations
+ * to ensure timezone independence and consistency.
  *
- * @param dateStr The date string to parse (e.g., "1948", "December 1948", "1948-12-03").
- * @returns A fractional year (e.g., 1948.92) or null if parsing fails.
+ * @param dateStr The date string to parse (e.g., "1970-02-13", "February 1970", "1970").
+ * @returns A fractional year (e.g., 1970.118) or null if parsing fails.
  */
 export function parseDateToFractionalYear(dateStr: string): number | null {
-  if (!dateStr) return null;
+  if (!dateStr || typeof dateStr !== 'string') return null;
 
-  // 1. Handle "Month YYYY" format (e.g., "December 1948")
-  const monthYearMatch = dateStr.match(/(\w+)\s(\d{4})/);
+  const trimmedDateStr = dateStr.trim();
+
+  // 1. Handle YYYY-MM-DD format (most reliable)
+  const ymdMatch = trimmedDateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (ymdMatch) {
+    const year = parseInt(ymdMatch[1], 10);
+    const month = parseInt(ymdMatch[2], 10);
+    const day = parseInt(ymdMatch[3], 10);
+
+    const startOfYear = Date.UTC(year, 0, 1);
+    const targetDate = Date.UTC(year, month - 1, day);
+    const dayOfYear = (targetDate - startOfYear) / (1000 * 60 * 60 * 24);
+    
+    return year + dayOfYear / getDaysInYear(year);
+  }
+
+  // 2. Handle "Month YYYY" format
+  const monthYearMatch = trimmedDateStr.match(/(\w+)\s(\d{4})/);
   if (monthYearMatch) {
     const monthName = monthYearMatch[1];
     const year = parseInt(monthYearMatch[2], 10);
-    const monthIndex = MONTH_NAMES.findIndex(m => m.toLowerCase().startsWith(monthName.toLowerCase()));
+    const monthIndex = MONTH_NAMES.findIndex(m => m.toLowerCase() === monthName.toLowerCase());
     
     if (monthIndex !== -1) {
-      // Position the event in the middle of the month for better average accuracy.
+      // Position in the middle of the month for better average accuracy
       return year + (monthIndex + 0.5) / 12;
     }
   }
-
-  // 2. Handle full dates or year-only formats using the Date object.
-  // We construct a UTC date to ensure consistency across all clients.
-  const date = new Date(dateStr);
-  if (!isNaN(date.getTime())) {
-    // Make sure we are in UTC
-    const utcDate = new Date(Date.UTC(
-        date.getUTCFullYear(),
-        date.getUTCMonth(),
-        date.getUTCDate()
-    ));
-
-    const year = utcDate.getUTCFullYear();
-    
-    // If the original string was just a year, position it at the start of the year.
-    if (/^\d{4}$/.test(dateStr.trim())) {
-        return year;
-    }
-
-    const startOfYear = new Date(Date.UTC(year, 0, 1));
-    const dayOfYear = (utcDate.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24);
-    const daysInYear = getDaysInYear(year);
-    
-    return year + dayOfYear / daysInYear;
+  
+  // 3. Handle "YYYY" format
+  const yearMatch = trimmedDateStr.match(/^(\d{4})$/);
+  if (yearMatch) {
+    // Position at the very start of the year
+    return parseInt(yearMatch[1], 10);
+  }
+  
+  // Fallback for other potential date formats using Date.parse,
+  // though it can be unreliable across timezones. Use as a last resort.
+  const parsedDate = Date.parse(trimmedDateStr);
+  if (!isNaN(parsedDate)) {
+      const date = new Date(parsedDate);
+      const year = date.getUTCFullYear();
+      const startOfYear = Date.UTC(year, 0, 1);
+      const dayOfYear = (date.getTime() - startOfYear) / (1000 * 60 * 60 * 24);
+      return year + dayOfYear / getDaysInYear(year);
   }
 
-  return null; // Return null if no format matches
+
+  // Return null if no format matches
+  console.warn(`Could not parse date: "${dateStr}"`);
+  return null; 
 }
