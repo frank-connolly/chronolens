@@ -20,29 +20,26 @@ const MIN_PX_BETWEEN_MARKERS = 60;
 
 const parseYear = (dateStr: string): number | null => {
   if (!dateStr) return null;
-  
-  // Attempt to parse the date string
-  const date = new Date(dateStr);
 
-  // Check if the date is valid. `new Date('YYYY')` can sometimes be off by a day due to timezone.
-  // We want to handle "YYYY" as a special case.
-  const yearMatch = dateStr.trim().match(/^(\d{4})$/);
+  // Handles "YYYY" format
+  const yearMatch = dateStr.trim().match(/^\d{4}$/);
   if (yearMatch) {
-    return parseInt(yearMatch[1], 10);
+    return parseInt(yearMatch[0], 10);
   }
 
+  const date = new Date(dateStr);
   if (!isNaN(date.getTime())) {
+    // For full dates, calculate the fractional part of the year.
     const year = date.getFullYear();
     const startOfYear = new Date(year, 0, 1);
-    const timeDiff = date.getTime() - startOfYear.getTime();
-    const isLeap = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
-    const daysInYear = isLeap ? 366 : 365;
-    const dayOfYear = timeDiff / (1000 * 60 * 60 * 24);
+    const endOfYear = new Date(year + 1, 0, 1);
+    const totalTimeInYear = endOfYear.getTime() - startOfYear.getTime();
+    const timeFromStart = date.getTime() - startOfYear.getTime();
     
-    return year + dayOfYear / daysInYear;
+    return year + (timeFromStart / totalTimeInYear);
   }
-  
-  // Fallback for cases like "c. 1950" or other unparseable formats
+
+  // Fallback for formats like "c. 1950" or other unparseable strings.
   const fallbackYearMatch = dateStr.match(/\b(\d{4})\b/);
   return fallbackYearMatch ? parseInt(fallbackYearMatch[0], 10) : null;
 };
@@ -107,8 +104,11 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const scrollTop = e.currentTarget.scrollTop;
-    setCursorY(e.clientY - rect.top + scrollTop);
-  };
+    // Get padding-top of the element
+    const style = window.getComputedStyle(e.currentTarget);
+    const paddingTop = parseFloat(style.paddingTop);
+    setCursorY(e.clientY - rect.top + scrollTop - paddingTop);
+};
 
   const handleMouseLeave = () => {
     setCursorY(null);
@@ -154,7 +154,7 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
           style={{ height: `${totalHeight}px` }}
         >
            {/* Background Year Lines */}
-          <div className="absolute top-0 left-0 w-full h-full pointer-events-none -z-20">
+          <div className="absolute top-0 left-0 w-full h-full pointer-events-none -z-10">
             {yearMarkers.map((year) => {
               const top = (year - minYear) * Y_AXIS_MULTIPLIER * zoom;
               return (
