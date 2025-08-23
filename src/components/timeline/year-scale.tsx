@@ -62,7 +62,7 @@ function getMarkerLabel(fractionalYear: number, type: 'year' | 'month' | 'day'):
     date.setDate(dayOfYear + 1); // Add days
     const monthName = MONTH_NAMES[date.getMonth()];
     // When zoomed out, day markers can fall on the same month. Only show month for first day.
-     if (date.getDate() === 1) {
+     if (date.getDate() === 1 && date.getHours() < 1) { // Check if it's the first day of the month.
        return `${monthName} ${year}`;
     }
     return `${monthName} ${date.getDate()}`;
@@ -74,6 +74,8 @@ function getMarkerLabel(fractionalYear: number, type: 'year' | 'month' | 'day'):
 export default function YearScale({ minYear, maxYear, zoom, yAxisMultiplier }: YearScaleProps) {
   const markers = useMemo(() => {
     const pixelsPerYear = yAxisMultiplier * zoom;
+    if (pixelsPerYear <= 0) return [];
+    
     const idealInterval = MIN_PX_PER_INTERVAL / pixelsPerYear;
     
     // Find the best interval from our predefined list
@@ -85,8 +87,10 @@ export default function YearScale({ minYear, maxYear, zoom, yAxisMultiplier }: Y
     const startYear = Math.ceil(minYear / interval) * interval;
 
     for (let year = startYear; year <= maxYear; year += interval) {
-      // Avoid floating point inaccuracies
-      const roundedYear = parseFloat(year.toPrecision(10));
+      // Avoid floating point inaccuracies by rounding to a high precision
+      const roundedYear = parseFloat(year.toPrecision(12));
+      if (roundedYear < minYear) continue;
+
       yearMarkers.push({
         value: roundedYear,
         label: getMarkerLabel(roundedYear, type),
