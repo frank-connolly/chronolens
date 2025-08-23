@@ -21,7 +21,7 @@ const PopulateTimelineOutputSchema = z.object({
   events: z.array(
     z.object({
       date: z.string().describe('The date of the event.'),
-      title: z.string().describe('A short, concise title for the event (5-7 words max).'),
+      title: z.string().describe('A short, concise title for the event (5-7 words max). This title should be a summary of the event, not just the date.'),
       event: z.string().describe('A one-sentence description of the event.'),
     })
   ).describe('An array of significant events extracted from the Wikipedia page.'),
@@ -36,7 +36,7 @@ const prompt = ai.definePrompt({
   name: 'populateTimelinePrompt',
   input: { schema: PopulateTimelineInputSchema },
   output: { schema: PopulateTimelineOutputSchema },
-  prompt: `Generate a timeline of significant events for the topic: {{{wikipediaPageTitle}}}. For each event, provide the date, a short title (5-7 words), and a one-sentence description.`,
+  prompt: `Generate a timeline of significant events for the topic: {{{wikipediaPageTitle}}}. For each event, provide the date, a short descriptive title (5-7 words), and a one-sentence description. The title should summarize the event itself, not just be the date.`,
 });
 
 const populateTimelineFlow = ai.defineFlow(
