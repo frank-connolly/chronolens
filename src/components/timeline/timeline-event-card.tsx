@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -8,24 +9,64 @@ import { ChevronDown } from 'lucide-react';
 
 interface TimelineEventCardProps {
   event: TimelineEvent;
-  top: number;
+  eventY: number; // The actual vertical position of the event on the timeline
+  cardY: number;  // The vertical position of the card itself (for layout)
   side: 'left' | 'right';
 }
 
-export default function TimelineEventCard({ event, top, side }: TimelineEventCardProps) {
+const CARD_WIDTH = 144; // w-36
+const CONNECTOR_MARGIN = 16; // 1rem
+
+export default function TimelineEventCard({ event, eventY, cardY, side }: TimelineEventCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+
+  const cardHorizontalPosition = side === 'left' 
+    ? `left-0` 
+    : `right-0`;
+
+  // SVG Path calculation
+  const startX = 0;
+  const startY = eventY;
+  const endX = side === 'left' ? -CONNECTOR_MARGIN : CONNECTOR_MARGIN;
+  const endY = cardY;
+  
+  const midY = endY;
+
+  // Path from event dot on timeline to the card
+  const pathD = `M ${startX} ${startY} L ${endX} ${midY}`;
+
 
   return (
     <div
       className={cn(
-        'absolute w-[calc(50%-1rem)] transition-all duration-300',
-        side === 'left' ? 'left-0' : 'right-0',
-        isExpanded ? 'z-10' : 'z-0'
+        'absolute w-full h-full pointer-events-none',
+        isExpanded ? 'z-20' : 'z-10' // Bring card to front when expanded
       )}
-      style={{ top: `${top}px` }}
+      style={{ left: side === 'left' ? 'auto' : '50%', right: side === 'right' ? 'auto' : '50%'}}
     >
-      <div className="relative">
-        <Card 
+      {/* SVG Connector */}
+      <svg className="absolute w-1/2 h-full overflow-visible">
+          <path d={pathD} stroke="hsl(var(--border))" strokeWidth="1" fill="none" />
+      </svg>
+      
+      {/* Event Dot on the timeline */}
+      <div
+        className="absolute top-0 w-3 h-3 rounded-full bg-background border-2 border-accent"
+        style={{
+          transform: `translate(-50%, ${eventY}px) translateY(-50%)`,
+          left: '0',
+        }}
+      />
+      
+      {/* Event Card */}
+      <div
+        className={cn(
+          'absolute w-[calc(50%-1rem)] pointer-events-auto', // 1rem is the connector margin
+          side === 'left' ? 'left-0' : 'right-0'
+        )}
+        style={{ top: `${cardY}px`, transform: `translateY(-50%)` }}
+      >
+         <Card 
           className="shadow-md hover:shadow-xl transition-shadow duration-300 border-primary/20 cursor-pointer"
           onClick={() => setIsExpanded(!isExpanded)}
         >
@@ -46,19 +87,6 @@ export default function TimelineEventCard({ event, top, side }: TimelineEventCar
             )}
           </CardHeader>
         </Card>
-        {/* Connector line and dot */}
-        <div
-          className={cn(
-            'absolute top-1/2 -translate-y-1/2 h-px bg-border w-4',
-            side === 'left' ? 'right-[-1rem]' : 'left-[-1rem]'
-          )}
-        />
-        <div
-          className={cn(
-            'absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-background border-2 border-accent',
-            side === 'left' ? 'right-[-1.75rem]' : 'left-[-1.75rem]'
-          )}
-        />
       </div>
     </div>
   );
