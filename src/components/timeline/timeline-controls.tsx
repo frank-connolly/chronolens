@@ -3,14 +3,14 @@
 import { useRef, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, ZoomIn, ZoomOut, Loader2 } from 'lucide-react';
+import { Plus, Search, ZoomIn, ZoomOut, Loader2, RefreshCw } from 'lucide-react';
 
 interface TimelineControlsProps {
   onAddTimeline: (topic: string) => void;
   isPending: boolean;
   onZoomIn: () => void;
   onZoomOut: () => void;
-  zoomLevel: number;
+  onZoomReset: () => void;
   canZoomIn: boolean;
   canZoomOut: boolean;
 }
@@ -20,6 +20,7 @@ export default function TimelineControls({
   isPending,
   onZoomIn,
   onZoomOut,
+  onZoomReset,
   canZoomIn,
   canZoomOut,
 }: TimelineControlsProps) {
@@ -55,12 +56,16 @@ export default function TimelineControls({
         </Button>
       </form>
       <div className="flex items-center gap-1 rounded-md border p-1">
-        <Button variant="ghost" size="icon" onClick={onZoomOut} className="h-8 w-8" disabled={!canZoomOut}>
+        <Button variant="ghost" size="icon" onClick={onZoomOut} className="h-8 w-8" disabled={!canZoomOut} title="Zoom Out">
           <ZoomOut />
         </Button>
         <div className="w-px h-6 bg-border mx-1"></div>
-        <Button variant="ghost" size="icon" onClick={onZoomIn} className="h-8 w-8" disabled={!canZoomIn}>
+        <Button variant="ghost" size="icon" onClick={onZoomIn} className="h-8 w-8" disabled={!canZoomIn} title="Zoom In">
           <ZoomIn />
+        </Button>
+         <div className="w-px h-6 bg-border mx-1"></div>
+        <Button variant="ghost" size="icon" onClick={onZoomReset} className="h-8 w-8" title="Reset Zoom">
+          <RefreshCw />
         </Button>
       </div>
     </div>

@@ -10,10 +10,11 @@ import { History, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const TIMELINES_STORAGE_KEY = 'chronoLensTimelines';
+const DEFAULT_ZOOM = 1;
 
 export default function ChronoLensPage() {
   const [timelines, setTimelines] = useState<Timeline[]>([]);
-  const [zoom, setZoom] = useState(1);
+  const [zoom, setZoom] = useState(DEFAULT_ZOOM);
   const [isPending, startTransition] = useTransition();
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const { toast } = useToast();
@@ -97,8 +98,9 @@ export default function ChronoLensPage() {
     localStorage.removeItem(TIMELINES_STORAGE_KEY);
   }
 
-  const handleZoomIn = () => setZoom(z => Math.min(z * 1.5, 20));
-  const handleZoomOut = () => setZoom(z => Math.max(z / 1.5, 0.1));
+  const handleZoomIn = () => setZoom(z => Math.min(z * 1.5, 400));
+  const handleZoomOut = () => setZoom(z => Math.max(z / 1.5, 0.05));
+  const handleZoomReset = () => setZoom(DEFAULT_ZOOM);
 
   return (
     <div className="flex flex-col h-screen bg-background text-foreground">
@@ -113,9 +115,9 @@ export default function ChronoLensPage() {
             isPending={isPending}
             onZoomIn={handleZoomIn}
             onZoomOut={handleZoomOut}
-            zoomLevel={zoom}
-            canZoomIn={zoom < 20}
-            canZoomOut={zoom > 0.1}
+            onZoomReset={handleZoomReset}
+            canZoomIn={zoom < 400}
+            canZoomOut={zoom > 0.05}
           />
           {timelines.length > 0 && <Button variant="outline" onClick={handleClear}>Clear All</Button>}
         </div>
