@@ -18,16 +18,34 @@ const Y_AXIS_MULTIPLIER = 100; // pixels per year at zoom level 1
 const MIN_PX_BETWEEN_MARKERS = 60;
 
 
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
 const parseYear = (dateStr: string): number | null => {
   if (!dateStr) return null;
+  const trimmedDate = dateStr.trim();
 
-  // Handles "YYYY" format
-  const yearMatch = dateStr.trim().match(/^\d{4}$/);
-  if (yearMatch) {
-    return parseInt(yearMatch[0], 10);
+  // 1. Handles "Month YYYY" format (e.g., "December 1948")
+  const monthYearMatch = trimmedDate.match(
+    /^(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})$/
+  );
+  if (monthYearMatch) {
+    const monthName = monthYearMatch[1];
+    const year = parseInt(monthYearMatch[2], 10);
+    const monthIndex = MONTHS.indexOf(monthName);
+    if (monthIndex !== -1) {
+      // Return fractional year. e.g., Jan is 0/12, Dec is 11/12
+      return year + monthIndex / 12;
+    }
   }
 
-  const date = new Date(dateStr);
+  // 2. Handles "YYYY" format
+  const yearOnlyMatch = trimmedDate.match(/^\d{4}$/);
+  if (yearOnlyMatch) {
+    return parseInt(yearOnlyMatch[0], 10);
+  }
+
+  // 3. Fallback to Date object for full dates (e.g., "YYYY-MM-DD")
+  const date = new Date(trimmedDate);
   if (!isNaN(date.getTime())) {
     // For full dates, calculate the fractional part of the year.
     const year = date.getFullYear();
@@ -35,12 +53,11 @@ const parseYear = (dateStr: string): number | null => {
     const endOfYear = new Date(year + 1, 0, 1);
     const totalTimeInYear = endOfYear.getTime() - startOfYear.getTime();
     const timeFromStart = date.getTime() - startOfYear.getTime();
-    
     return year + (timeFromStart / totalTimeInYear);
   }
-
-  // Fallback for formats like "c. 1950" or other unparseable strings.
-  const fallbackYearMatch = dateStr.match(/\b(\d{4})\b/);
+  
+  // 4. Final fallback for formats like "c. 1950" or other unparseable strings.
+  const fallbackYearMatch = trimmedDate.match(/\b(\d{4})\b/);
   return fallbackYearMatch ? parseInt(fallbackYearMatch[0], 10) : null;
 };
 
