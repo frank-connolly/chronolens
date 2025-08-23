@@ -30,10 +30,6 @@ export default function TimelineColumn({
   onRemove,
 }: TimelineColumnProps) {
 
-  const sortedEvents = [...timeline.events]
-    .filter(event => event.fractionalYear !== null)
-    .sort((a, b) => (a.fractionalYear as number) - (b.fractionalYear as number));
-
   return (
     <div className="relative w-80 shrink-0 h-full">
       <div 
@@ -59,7 +55,7 @@ export default function TimelineColumn({
         className="absolute top-0 left-1/2 -translate-x-1/2 h-full w-0.5 bg-border -z-10" />
 
       <div className="relative h-full">
-        {sortedEvents.map((event, index) => {
+        {timeline.events.filter(e => e.fractionalYear !== null).sort((a,b) => (a.fractionalYear as number) - (b.fractionalYear as number)).map((event, index) => {
           if (event.fractionalYear === null) return null;
 
           const year = event.fractionalYear;
