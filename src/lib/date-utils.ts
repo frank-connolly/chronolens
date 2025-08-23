@@ -7,6 +7,8 @@ const MONTH_NAMES = [
   "July", "August", "September", "October", "November", "December"
 ];
 
+const DAYS_IN_MONTH = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
 /**
  * Checks if a given year is a leap year.
  * @param year The year to check.
@@ -44,12 +46,18 @@ export function parseDateToFractionalYear(dateStr: string): number | null {
     const month = parseInt(ymdMatch[2], 10);
     const day = parseInt(ymdMatch[3], 10);
     
-    // Day of year calculation
-    const startOfYear = Date.UTC(year, 0, 1); // Jan 1
-    const targetDate = Date.UTC(year, month - 1, day);
-    const dayOfYear = (targetDate - startOfYear) / (1000 * 60 * 60 * 24); // 0-indexed day of year
+    let dayOfYear = day;
+    for (let i = 0; i < month - 1; i++) {
+        dayOfYear += DAYS_IN_MONTH[i];
+    }
 
-    return year + dayOfYear / getDaysInYear(year);
+    // Add a day for leap years if the date is after Feb 28th
+    if (isLeapYear(year) && month > 2) {
+        dayOfYear += 1;
+    }
+    
+    // The fractional part is the 0-indexed day of year divided by total days.
+    return year + (dayOfYear - 1) / getDaysInYear(year);
   }
 
   // 2. Handle "Month YYYY" format
@@ -72,19 +80,6 @@ export function parseDateToFractionalYear(dateStr: string): number | null {
     return parseInt(yearMatch[1], 10);
   }
   
-  // Fallback for other potential date formats using Date.parse,
-  // though it can be unreliable across timezones. Use as a last resort.
-  const parsedDate = Date.parse(trimmedDateStr);
-  if (!isNaN(parsedDate)) {
-      const date = new Date(parsedDate);
-      const year = date.getUTCFullYear();
-      const startOfYear = Date.UTC(year, 0, 1);
-      const dayOfYear = (date.getTime() - startOfYear) / (1000 * 60 * 60 * 24);
-      return year + dayOfYear / getDaysInYear(year);
-  }
-
-
-  // Return null if no format matches
   console.warn(`Could not parse date: "${dateStr}"`);
   return null; 
 }
