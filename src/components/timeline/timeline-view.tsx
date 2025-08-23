@@ -8,6 +8,7 @@ import YearScale from './year-scale';
 import CursorIndicator from './cursor-indicator';
 import { Frown } from 'lucide-react';
 import { getMarkerLabel } from './get-marker-label';
+import { parseYear } from './parse-year';
 
 interface TimelineViewProps {
   timelines: Timeline[];
@@ -18,51 +19,10 @@ interface TimelineViewProps {
 const Y_AXIS_MULTIPLIER = 100; // pixels per year at zoom level 1
 const MIN_PX_BETWEEN_MARKERS = 60;
 
-const parseYear = (dateStr: string): number | null => {
-    if (!dateStr) return null;
-    const trimmedDate = dateStr.trim();
-
-    // UTC-based parsing to avoid timezone-related off-by-one errors.
-    
-    // Attempt to match "Month YYYY" (e.g., "December 1948")
-    const monthYearMatch = trimmedDate.match(/^(january|february|march|april|may|june|july|august|september|october|november|december)\s+(\d{4})$/i);
-    if (monthYearMatch) {
-        const monthName = monthYearMatch[1].toLowerCase();
-        const year = parseInt(monthYearMatch[2], 10);
-        const monthIndex = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'].indexOf(monthName);
-        if (monthIndex !== -1) {
-            // Position in the middle of the month for better average placement
-            return year + (monthIndex + 0.5) / 12;
-        }
-    }
-    
-    // Attempt to match just a year "YYYY"
-    if (/^\d{4}$/.test(trimmedDate)) {
-        // Position at the start of the year
-        return parseInt(trimmedDate, 10);
-    }
-    
-    // Fallback for full dates using UTC to avoid timezone issues
-    const date = new Date(trimmedDate);
-    if (!isNaN(date.getTime())) {
-        const year = date.getUTCFullYear();
-        const startOfYear = Date.UTC(year, 0, 1);
-        const timeInYear = date.getTime() - startOfYear;
-        const yearDuration = Date.UTC(year + 1, 0, 1) - startOfYear;
-        
-        if (yearDuration > 0) {
-            return year + (timeInYear / yearDuration);
-        }
-        return year;
-    }
-    
-    // Final fallback for formats like "c. 1950" or other unparseable strings.
-    const fallbackYearMatch = trimmedDate.match(/\b(\d{4})\b/);
-    return fallbackYearMatch ? parseInt(fallbackYearMatch[0], 10) : null;
-};
-
-
 export default function TimelineView({ timelines, zoom, onRemoveTimeline }: TimelineViewProps) {
+  const [cursorY, setCursorY] = useState<number | null>(null);
+  const mainRef = useRef<HTMLDivElement>(null);
+
   const [minYear, maxYear] = useMemo(() => {
     let min: number | null = null;
     let max: number | null = null;
@@ -116,7 +76,12 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
     return markers;
   }, [minYear, maxYear, zoom]);
 
-  const [cursorY, setCursorY] = useState<number | null>(null);
+  const cursorYear = useMemo(() => {
+    if (cursorY === null || !mainRef.current) return null;
+    const scrollTop = mainRef.current.scrollTop;
+    return minYear + (cursorY + scrollTop) / (Y_AXIS_MULTIPLIER * zoom);
+  }, [cursorY, minYear, zoom]);
+
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -126,7 +91,7 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
   const handleMouseLeave = () => {
     setCursorY(null);
   };
-
+  
   if (timelines.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-8">
@@ -138,15 +103,6 @@ export default function TimelineView({ timelines, zoom, onRemoveTimeline }: Time
   }
 
   const totalHeight = (maxYear - minYear) * Y_AXIS_MULTIPLIER * zoom;
-  
-  const mainRef = useRef<HTMLDivElement>(null);
-  
-  const cursorYear = useMemo(() => {
-    if (cursorY === null || !mainRef.current) return null;
-    const scrollTop = mainRef.current.scrollTop;
-    return minYear + (cursorY + scrollTop) / (Y_AXIS_MULTIPLIER * zoom);
-  }, [cursorY, minYear, zoom, timelines]);
-
 
   return (
     <div 
